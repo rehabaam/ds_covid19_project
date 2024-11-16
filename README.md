@@ -12,3 +12,15 @@ The data set contains chest x-ray images for covid-19 positive cases but also x-
 ### Bibliography:
 https://arxiv.org/abs/2003.13865 
 https://doi.org/10.1016/j.compbiomed.2021.105002
+
+## Running the project
+### Python virtual environment
+To setup venv for this project, use the script `venv.sh` in the root folder of this project as the following:
+```bash
+source venv.sh help
+```
+### Install project dependencies
+To install project's dependencies, use Makefile in the root folder of this project as the following:
+```bash
+make install
+```

@@ -14,6 +14,36 @@ https://arxiv.org/abs/2003.13865
 https://doi.org/10.1016/j.compbiomed.2021.105002
 
 ## Running the project
+### GIT
+Git commands to use in terminal/console
+#### show git log
+```bash
+git log --oneline --graph --name-status
+```
+#### show changes by user (blame)
+```bash
+git blame filename
+```
+#### show change between commits
+```bash
+git diff commit1 commit2
+```
+#### reset change to last commit
+```bash
+git reset --soft HEAD~1
+```
+#### create new branch
+```bash
+git checkout -b new-branch-name
+```
+#### add stages files
+```bash
+git add file1
+```
+#### commit changes with a message
+```bash
+git commit -m "message"
+```
 ### Python virtual environment
 To setup venv for this project, use the script `venv.sh` in the root folder of this project as the following:
 ```bash

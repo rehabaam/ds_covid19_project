@@ -43,6 +43,13 @@ visualize:
 all: download preprocess train test evaluate visualize
 
 #---------------------------------------------------
+# Running unit tests
+#---------------------------------------------------
+## Delete all compiled Python files
+unit-tests:
+	pytest
+
+#---------------------------------------------------
 # Cleaning folders
 #---------------------------------------------------
 ## Delete all compiled Python files

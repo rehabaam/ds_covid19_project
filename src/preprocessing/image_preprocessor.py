@@ -2,6 +2,9 @@ import cv2
 import os
 
 class Image_PreProcessor:
+    """
+    Image_PreProcessor class processes images in a directory by drawing contours around objects in the images.
+    """
     def __init__(self, images_dir, display_image):
         self.images_dir = images_dir
         self.display_image = display_image
@@ -29,12 +32,11 @@ class Image_PreProcessor:
 
 
     def process_all_images_in_directory(self):
+        """
+        process_all_images_in_directory function processes all images in the directory by calling draw_image_countours function.
+        """
         for filename in os.listdir(self.images_dir):
             if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
                 image_path = os.path.join(self.images_dir, filename)
                 print(image_path)
                 self.draw_image_countours(image_path)
-
-
-if __name__ == '__main__':
-   self.process_all_images_in_directory() 

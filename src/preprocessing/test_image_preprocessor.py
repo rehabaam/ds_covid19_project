@@ -2,7 +2,7 @@ import pytest
 import os
 import cv2
 import numpy as np
-from image_preprocessor import Image_PreProcessor
+from src.preprocessing.image_preprocessor import process_all_images_in_directory
 
 @pytest.fixture
 def setup_test_images(tmpdir):
@@ -15,14 +15,14 @@ def setup_test_images(tmpdir):
         cv2.imwrite(image_path, image)
     return image_dir
 
-def test_process_all_images_in_directory(setup_test_images):
+def test_process_all_images_in_directory(setup_test_images, mocker):
     image_dir = setup_test_images
-    processor = Image_PreProcessor(images_dir=str(image_dir), display_image=False)
-    
-    # Mock the draw_image_countours method to avoid displaying images
-    processor.draw_image_countours = lambda x: None
-    processor.process_all_images_in_directory()
-    
+
+    # Mock the draw_image_countours function to avoid displaying images
+    mocker.patch('src.preprocessing.image_preprocessor.draw_image_countours', return_value=None)
+
+    process_all_images_in_directory(str(image_dir))
+
     # Verify that all images in the directory were processed
     processed_images = [f"test_image_{i}.jpg" for i in range(3)]
     for image_name in processed_images:

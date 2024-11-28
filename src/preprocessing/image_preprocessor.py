@@ -9,7 +9,6 @@ def draw_image_countours(image_path,display_image = False) :
     image_path: str: Path to the image file
     display_image: bool: If True, the image with contours will be displayed
     """
-    print(type(image_path))
     image = cv2.imread(image_path)
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
@@ -30,5 +29,4 @@ def process_all_images_in_directory(images_dir):
     for filename in os.listdir(images_dir):
         if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
             image_path = os.path.join(images_dir, filename)
-            print(image_path)
             draw_image_countours(image_path)

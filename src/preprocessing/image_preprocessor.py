@@ -1,5 +1,7 @@
 import cv2
 import os
+import pandas as pd
+import numpy as np
 
 def draw_image_countours(image_path,display_image = False) :
     """
@@ -21,12 +23,29 @@ def draw_image_countours(image_path,display_image = False) :
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-
-def process_all_images_in_directory(images_dir):
+def get_images_statistics(images_dir):
     """
-    process_all_images_in_directory function processes all images in the directory by calling draw_image_countours function.
+    get_images_statustics function returns the number of images in the directory.
+    
+    Input:
+    images_dir: str: Path to the directory containing images
     """
+    data = []
     for filename in os.listdir(images_dir):
         if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-            image_path = os.path.join(images_dir, filename)
-            draw_image_countours(image_path)
+            image = cv2.imread(os.path.join(images_dir, filename))
+            image_statistics = [filename[:-4],np.min(image),np.max(image),np.mean(image),np.median(image),np.std(image)]
+            data.append(image_statistics)
+    return pd.DataFrame(data,columns = ['image','min','max','mean','median','std'])
+
+
+def store_images_statistics(images_data,csv_filename):
+    """
+    store_images_statistics function stores the image statistics in a CSV file.
+    
+    Input:
+    images_data: pd.DataFrame: DataFrame containing image statistics
+    csv_filename: str: Name of the CSV file
+    """
+    images_data.to_csv(csv_filename)
+            

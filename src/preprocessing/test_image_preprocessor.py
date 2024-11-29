@@ -2,7 +2,8 @@ import pytest
 import os
 import cv2
 import numpy as np
-from src.preprocessing.image_preprocessor import process_all_images_in_directory
+import pandas as pd
+from src.preprocessing.image_preprocessor import get_images_statistics,store_images_statistics
 
 @pytest.fixture
 def setup_test_images(tmpdir):
@@ -15,16 +16,45 @@ def setup_test_images(tmpdir):
         cv2.imwrite(image_path, image)
     return image_dir
 
-def test_process_all_images_in_directory(setup_test_images, mocker):
+def test_get_images_statistics(setup_test_images):
     image_dir = setup_test_images
+    stats_df = get_images_statistics(str(image_dir))
+    stats_df.sort_values(by='image', inplace=True)
+    # Verify the statistics DataFrame
+    assert len(stats_df) == 3
+    assert list(stats_df.columns) == ['image', 'min', 'max', 'mean', 'median', 'std']
+    for i in range(3):
+        assert stats_df.iloc[i]['image'] == f"test_image_{i}"
+        assert stats_df.iloc[i]['min'] == 0
+        assert stats_df.iloc[i]['max'] == 0
+        assert stats_df.iloc[i]['mean'] == 0
+        assert stats_df.iloc[i]['median'] == 0
+        assert stats_df.iloc[i]['std'] == 0
 
-    # Mock the draw_image_countours function to avoid displaying images
-    mocker.patch('src.preprocessing.image_preprocessor.draw_image_countours', return_value=None)
-
-    process_all_images_in_directory(str(image_dir))
-
-    # Verify that all images in the directory were processed
-    processed_images = [f"test_image_{i}.jpg" for i in range(3)]
-    for image_name in processed_images:
-        image_path = os.path.join(image_dir, image_name)
-        assert os.path.exists(image_path), f"{image_path} does not exist"
+def test_store_images_statistics(tmpdir):
+    # Create a sample DataFrame
+    data = {
+        'image': ['test_image_0', 'test_image_1', 'test_image_2'],
+        'min': [0, 0, 0],
+        'max': [0, 0, 0],
+        'mean': [0, 0, 0],
+        'median': [0, 0, 0],
+        'std': [0, 0, 0]
+    }
+    images_data = pd.DataFrame(data)
+    
+    # Define the CSV filename
+    csv_filename = "test_statistics.csv"
+    
+    # Store the statistics in a CSV file
+    store_images_statistics(images_data, csv_filename)
+    
+    # Verify the CSV file
+    csv_path = os.path.join(csv_filename)
+    print(csv_path)
+    assert os.path.exists(csv_path)
+    
+    # Read the CSV file and verify its content
+    stored_data = pd.read_csv(csv_path, index_col=0)
+    print(images_data, stored_data)
+    pd.testing.assert_frame_equal(images_data, stored_data)

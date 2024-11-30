@@ -34,7 +34,8 @@ def get_images_statistics(images_dir):
     for filename in os.listdir(images_dir):
         if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
             image = cv2.imread(os.path.join(images_dir, filename))
-            image_statistics = [filename[:-4],np.min(image),np.max(image),np.mean(image),np.median(image),np.std(image)]
+            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            image_statistics = [filename[:-4],np.min(gray_image),np.max(gray_image),np.mean(gray_image),np.median(gray_image),np.std(gray_image)]
             data.append(image_statistics)
     return pd.DataFrame(data,columns = ['image','min','max','mean','median','std'])
 

@@ -2,6 +2,7 @@ import cv2
 import os
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 def draw_image_countours(image_path,display_image = False) :
     """
@@ -22,6 +23,33 @@ def draw_image_countours(image_path,display_image = False) :
         cv2.imshow('Contours', image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        
+def plot_image(original_image, modified_image):
+    """
+    plot_image function takes an image path as input and displays the image.
+    
+    Input:
+    image_path: str: Path to the image file
+    """
+    # Read the image
+    _, axs = plt.subplots(1, 2, figsize=(7, 4))
+
+    # Plot the original image
+    axs[0].imshow(original_image)
+    axs[0].set_title('Original Image')
+
+    # Plot the modified image
+    axs[1].imshow(modified_image)
+    axs[1].set_title('Modified image')
+
+    # Remove ticks from the subplots
+    for ax in axs:
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+    # Display the subplots
+    plt.tight_layout()
+    plt.show()
 
 def get_images_statistics(images_dir):
     """
@@ -35,10 +63,39 @@ def get_images_statistics(images_dir):
         if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
             image = cv2.imread(os.path.join(images_dir, filename))
             gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            image_statistics = [filename[:-4],np.min(gray_image),np.max(gray_image),np.mean(gray_image),np.median(gray_image),np.std(gray_image)]
+            image_statistics = [filename[:-4],
+                                np.min(gray_image),
+                                np.max(gray_image),
+                                np.mean(gray_image),
+                                np.median(gray_image),
+                                np.std(gray_image)]
             data.append(image_statistics)
     return pd.DataFrame(data,columns = ['image','min','max','mean','median','std'])
 
+def get_images_edges_statistics(images_dir):
+    """
+    get_images_edges_statistics function returns the number of images in the directory.
+    
+    Input:
+    images_dir: str: Path to the directory containing images
+    """
+    data = []
+    ddept=cv2.CV_8U
+    for filename in os.listdir(images_dir):
+        if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
+            image = cv2.imread(os.path.join(images_dir, filename))
+            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            x = cv2.Sobel(gray_image, ddept, 1,0, ksize=3, scale=1)
+            y = cv2.Sobel(gray_image, ddept, 0,1, ksize=3, scale=1)
+            edge = cv2.addWeighted(cv2.convertScaleAbs(x), 0.5, cv2.convertScaleAbs(y), 0.5,0)
+            image_statistics = [filename[:-4],
+                                np.min(edge),
+                                np.max(edge),
+                                np.mean(edge),
+                                np.median(edge),
+                                np.std(edge)]
+            data.append(image_statistics)
+    return pd.DataFrame(data,columns = ['image','min','max','mean','median','std'])
 
 def store_images_statistics(images_data,csv_filename):
     """
@@ -49,4 +106,13 @@ def store_images_statistics(images_data,csv_filename):
     csv_filename: str: Name of the CSV file
     """
     images_data.to_csv(csv_filename)
-            
+
+def plot_images_statistics(dataset,filename):
+    """
+    plot_images_statistics function plots the image statistics.
+    
+    Input:
+    images_data: pd.DataFrame: DataFrame containing image statistics
+    """
+    stats = pd.read_csv(filename, index_col=0)
+    stats.plot.hist(subplots=True, layout=(3,3), figsize=(15, 15), bins=20, title=dataset)

@@ -3,7 +3,7 @@ import os
 import cv2
 import numpy as np
 import pandas as pd
-from src.preprocessing.image_preprocessor import get_images_statistics, store_images_statistics, plot_images_statistics
+from src.preprocessing.image_preprocessor import get_images_statistics, store_images_statistics, plot_images_statistics,calulate_image_statistics
 import matplotlib.pyplot as plt
 
 @pytest.fixture
@@ -81,3 +81,31 @@ def test_plot_images_statistics(tmpdir):
     
     # Verify that the plot was created
     assert plt.gcf().number == 2
+
+def test_calulate_image_statistics():
+    # Create a dummy image
+    image = np.zeros((100, 100), dtype=np.uint8)
+    filename = "test_image.jpg"
+    
+    # Calculate statistics
+    stats = calulate_image_statistics(filename, image)
+    
+    # Verify the statistics
+    assert stats[0] == "test_image"
+    assert stats[1] == 0
+    assert stats[2] == 0
+    assert stats[3] == 0
+    assert stats[4] == 0
+    assert stats[5] == 0
+
+    # Create a non-zero dummy image
+    image = np.ones((100, 100), dtype=np.uint8) * 255
+    stats = calulate_image_statistics(filename, image)
+    
+    # Verify the statistics
+    assert stats[0] == "test_image"
+    assert stats[1] == 255
+    assert stats[2] == 255
+    assert stats[3] == 255
+    assert stats[4] == 255
+    assert stats[5] == 0

@@ -23,6 +23,7 @@ def draw_image_countours(image_path,display_image = False) :
         cv2.imshow('Contours', image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        cv2.waitKey(1)
         
 def plot_image(original_image, modified_image):
     """
@@ -51,6 +52,21 @@ def plot_image(original_image, modified_image):
     plt.tight_layout()
     plt.show()
 
+def calulate_image_statistics(filename,image):
+    """
+    calulate_image_statistics function calculates the statistics of an image.
+    
+    Input:
+    image: np.array: Image as a numpy array
+    filename: str: Name of the image file
+    """
+    return [filename[:-4],
+            np.min(image),
+            np.max(image),
+            np.mean(image),
+            np.median(image),
+            np.std(image)]
+
 def get_images_statistics(images_dir):
     """
     get_images_statustics function returns the number of images in the directory.
@@ -63,13 +79,7 @@ def get_images_statistics(images_dir):
         if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
             image = cv2.imread(os.path.join(images_dir, filename))
             gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            image_statistics = [filename[:-4],
-                                np.min(gray_image),
-                                np.max(gray_image),
-                                np.mean(gray_image),
-                                np.median(gray_image),
-                                np.std(gray_image)]
-            data.append(image_statistics)
+            data.append(calulate_image_statistics(filename,gray_image))
     return pd.DataFrame(data,columns = ['image','min','max','mean','median','std'])
 
 def get_images_edges_statistics(images_dir):
@@ -88,13 +98,7 @@ def get_images_edges_statistics(images_dir):
             x = cv2.Sobel(gray_image, ddept, 1,0, ksize=3, scale=1)
             y = cv2.Sobel(gray_image, ddept, 0,1, ksize=3, scale=1)
             edge = cv2.addWeighted(cv2.convertScaleAbs(x), 0.5, cv2.convertScaleAbs(y), 0.5,0)
-            image_statistics = [filename[:-4],
-                                np.min(edge),
-                                np.max(edge),
-                                np.mean(edge),
-                                np.median(edge),
-                                np.std(edge)]
-            data.append(image_statistics)
+            data.append(calulate_image_statistics(filename,edge))
     return pd.DataFrame(data,columns = ['image','min','max','mean','median','std'])
 
 def store_images_statistics(images_data,csv_filename):

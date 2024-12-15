@@ -3,7 +3,7 @@ import os
 import cv2
 import numpy as np
 import pandas as pd
-from src.preprocessing.image_preprocessor import get_images_statistics, store_images_statistics, plot_images_statistics,calulate_image_statistics
+from src.preprocessing.image_preprocessor import *
 import matplotlib.pyplot as plt
 
 @pytest.fixture
@@ -109,3 +109,32 @@ def test_calulate_image_statistics():
     assert stats[3] == 255
     assert stats[4] == 255
     assert stats[5] == 0
+    
+def test_crop_image(tmpdir):
+        # Create a temporary directory with a sample image
+        image_dir = tmpdir.mkdir("images")
+        image_path = os.path.join(image_dir, "test_image.jpg")
+        
+        # Create a dummy image
+        image = np.ones((100, 100, 3), dtype=np.uint8) * 255
+        cv2.imwrite(image_path, image)
+        
+        # Test cropping with default margin_percentage
+        cropped_image, original_image = crop_image(image_path)
+        assert cropped_image.shape == (80, 80, 3)
+        assert original_image.shape == (100, 100, 3)
+        
+        # Test cropping with a different margin_percentage
+        cropped_image, original_image = crop_image(image_path, margin_percentage=20)
+        assert cropped_image.shape == (60, 60, 3)
+        assert original_image.shape == (100, 100, 3)
+        
+        # Test cropping with a margin_percentage of 0
+        cropped_image, original_image = crop_image(image_path, margin_percentage=0)
+        assert cropped_image.shape == (100, 100, 3)
+        assert original_image.shape == (100, 100, 3)
+        
+        # Test cropping with a margin_percentage of 50
+        cropped_image, original_image = crop_image(image_path, margin_percentage=50)
+        assert cropped_image.shape == (0, 0, 3)
+        assert original_image.shape == (100, 100, 3)

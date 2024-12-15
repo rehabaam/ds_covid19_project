@@ -4,6 +4,28 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+def crop_image(image_path, margin_percentage=10):
+    """
+    crop_image function takes an image path as input and returns the cropped image.
+
+    Input:
+    image_path: str: Path to the image file
+    margin_percentage: int: Percentage of the image to be cropped from all sides
+
+    Output:
+    cropped_image: np.array: Cropped image as a numpy array
+    image: np.array: Original image as a numpy array
+    """
+    image = cv2.imread(image_path)
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    height, width = gray_image.shape
+    margin_x = int(width * margin_percentage / 100)
+    margin_y = int(height * margin_percentage / 100)
+
+    cropped_image = image[margin_y:height-margin_y, margin_x:width-margin_x]
+
+    return cropped_image, image
+
 def draw_image_countours(image_path,display_image = False) :
     """
     draw_image_countours function takes an image path as input and displays the image with contours.
@@ -12,9 +34,8 @@ def draw_image_countours(image_path,display_image = False) :
     image_path: str: Path to the image file
     display_image: bool: If True, the image with contours will be displayed
     """
-    image = cv2.imread(image_path)
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
+    image = crop_image(image_path, 10)
+    blurred_image = cv2.GaussianBlur(image[0], (5, 5), 0)
     edges = cv2.Canny(blurred_image, 50, 150)
     contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)        
     cv2.drawContours(image, contours, -1, (0, 255, 0), 3)
@@ -52,7 +73,7 @@ def plot_image(original_image, modified_image):
     plt.tight_layout()
     plt.show()
 
-def calulate_image_statistics(filename,image):
+def calulate_image_statistics(filename, image):
     """
     calulate_image_statistics function calculates the statistics of an image.
     
@@ -77,9 +98,8 @@ def get_images_statistics(images_dir):
     data = []
     for filename in os.listdir(images_dir):
         if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-            image = cv2.imread(os.path.join(images_dir, filename))
-            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            data.append(calulate_image_statistics(filename,gray_image))
+            image = crop_image(os.path.join(images_dir, filename), 10)
+            data.append(calulate_image_statistics(filename, image[0]))
     return pd.DataFrame(data,columns = ['image','min','max','mean','median','std'])
 
 def get_images_edges_statistics(images_dir):
@@ -93,10 +113,9 @@ def get_images_edges_statistics(images_dir):
     ddept=cv2.CV_8U
     for filename in os.listdir(images_dir):
         if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-            image = cv2.imread(os.path.join(images_dir, filename))
-            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            x = cv2.Sobel(gray_image, ddept, 1,0, ksize=3, scale=1)
-            y = cv2.Sobel(gray_image, ddept, 0,1, ksize=3, scale=1)
+            image = crop_image(os.path.join(images_dir, filename), 10)
+            x = cv2.Sobel(image[0], ddept, 1,0, ksize=3, scale=1)
+            y = cv2.Sobel(image[0], ddept, 0,1, ksize=3, scale=1)
             edge = cv2.addWeighted(cv2.convertScaleAbs(x), 0.5, cv2.convertScaleAbs(y), 0.5,0)
             data.append(calulate_image_statistics(filename,edge))
     return pd.DataFrame(data,columns = ['image','min','max','mean','median','std'])

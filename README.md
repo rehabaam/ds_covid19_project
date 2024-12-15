@@ -54,3 +54,8 @@ To install project's dependencies, use Makefile in the root folder of this proje
 ```bash
 make install
 ```
+### Jupyter notebook kernel to the .ds_covid19 env 
+To set Jupyter's notebook kernel to .ds_covid19 env, execute this command after the env is activate as the following:
+```bash
+python3 -m ipykernel install  --user --name=ds_covid19 
+```

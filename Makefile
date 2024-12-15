@@ -6,7 +6,7 @@ VENV = .ds_covid19
 
 # Install project's dependencies
 install:
-	pip install -r requirements.txt 
+	pip install -r requirements.txt -U
 
 # Store install packages for venv in requirements.txt
 freeze:

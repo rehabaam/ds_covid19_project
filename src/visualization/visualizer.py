@@ -2,15 +2,15 @@ import cv2
 import src.preprocessing.image_preprocessor as preprocessor
 import matplotlib.pyplot as plt
 
-def draw_image_histogram(image_path):
+def draw_image_histogram(image):
     """
     draw_image_histogram function takes an image as input and displays the histogram of the image.
 
     Input:
     image: np.array: Image as a numpy array
     """
-    image = cv2.imread(image_path, cv2.COLOR_BGR2GRAY)
-    hist_gray = cv2.calcHist([image], [0], None, [256], [0, 256])
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    hist_gray = cv2.calcHist([gray_image], [0], None, [256], [0, 256])
 
     # Plot the histogram
     plt.figure()
@@ -41,23 +41,20 @@ def draw_image_countours(image_path,display_image = False) :
         cv2.destroyAllWindows()
         cv2.waitKey(1)
         
-def plot_image(original_image, modified_image):
+def plot_images(images, labels):
     """
     plot_image function takes an image path as input and displays the image.
     
     Input:
-    image_path: str: Path to the image file
+    images : list : List of images
+    labels : list : List of labels
     """
     # Read the image
-    _, axs = plt.subplots(1, 2, figsize=(7, 4))
+    _, axs = plt.subplots(1, len(images), figsize=(7, 4))
 
-    # Plot the original image
-    axs[0].imshow(original_image)
-    axs[0].set_title('Original Image')
-
-    # Plot the modified image
-    axs[1].imshow(modified_image)
-    axs[1].set_title('Modified image')
+    for i in range(len(images)):
+        axs[i].imshow(images[i], cmap='gray')
+        axs[i].set_title(labels[i])
 
     # Remove ticks from the subplots
     for ax in axs:

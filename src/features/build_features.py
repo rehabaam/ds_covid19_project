@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import numpy as np
 from skimage.feature import hog
+from src.preprocessing.image_preprocessor import apply_image_mask
 
 def get_descriptor(descriptor):
     """
@@ -23,7 +24,7 @@ def get_descriptor(descriptor):
             raise TypeError('Descriptor not found')
     return descriptor_method
 
-def get_all_images_features(images_dir, method = 'ORB'):
+def get_all_images_features(images_dir, masks_dir = None, method = 'ORB'):
     """
     get_all_images_features function returns the keypoints and descriptors of all images in a directory.
     
@@ -43,7 +44,9 @@ def get_all_images_features(images_dir, method = 'ORB'):
 
     for filename in os.listdir(images_dir):
         if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-            image = cv2.imread(os.path.join(images_dir, filename), cv2.COLOR_BGR2GRAY)
+            image = cv2.imread(os.path.join(images_dir, filename), cv2.COLOR_BGR2GRAY) \
+                if masks_dir is None else \
+                    apply_image_mask(os.path.join(images_dir, filename), os.path.join(masks_dir, filename))
             keyPoints, descriptors = descriptor_method.detectAndCompute(image,None)
             get_descriptors = lambda x: x.shape[0] if x is not None else 0
             data.append([filename[:-4],get_descriptors(descriptors)]) 

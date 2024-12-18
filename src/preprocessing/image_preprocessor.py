@@ -25,6 +25,24 @@ def crop_image(image_path, margin_percentage=10):
 
     return cropped_image, gray
 
+def apply_image_mask(image_path,mask_path):
+    """
+    apply_image_mask function plots the image statistics.
+    
+    Input:
+    image_path: str: Path to the image file
+    mask_path: str: Path to the mask file
+
+    Output:
+    masked_image: np.array: Masked image as a numpy array
+    """
+    image = cv2.imread(image_path)
+
+    mask = cv2.imread(mask_path)
+    mask = cv2.resize(mask, image.shape[:2])
+    
+    return cv2.subtract(mask, image)
+
 def calulate_image_statistics(filename, image):
     """
     calulate_image_statistics function calculates the statistics of an image.

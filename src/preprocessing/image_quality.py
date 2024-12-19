@@ -1,8 +1,12 @@
-import cv2
+# -*- coding: utf-8 -*-
 import os
-import pandas as pd
+
+import cv2
 import numpy as np
+import pandas as pd
+
 from .image_preprocessor import crop_image
+
 
 def detect_blurriness(image, threshold=100):
     """
@@ -11,7 +15,7 @@ def detect_blurriness(image, threshold=100):
     Input:
     image: np.array: Image as a numpy array
     threshold: int: Threshold for the variance
-    
+
     Output:
     str: Blurriness status of the image
     float: Variance of the image
@@ -21,8 +25,9 @@ def detect_blurriness(image, threshold=100):
         status = f"Blurry (Variance: {variance:.2f})"
     else:
         status = f"Clear (Variance: {variance:.2f})"
-   
+
     return status, variance
+
 
 def detect_noise(image, threshold=20):
     """
@@ -31,7 +36,7 @@ def detect_noise(image, threshold=20):
     Input:
     image: np.array: Image as a numpy array
     threshold: int: Threshold for the variance
-    
+
     Output:
     str: Noise status of the image
     float: Standard deviation of the noise
@@ -41,9 +46,10 @@ def detect_noise(image, threshold=20):
     if noise_std > threshold:
         status = f"Noisy (Std Dev: {noise_std:.2f})"
     else:
-        status =  f"Low Noise (Std Dev: {noise_std:.2f})"
-    
+        status = f"Low Noise (Std Dev: {noise_std:.2f})"
+
     return status, noise_std
+
 
 def check_brightness(image, low_threshold=50, high_threshold=200):
     """
@@ -53,7 +59,7 @@ def check_brightness(image, low_threshold=50, high_threshold=200):
     image: np.array: Image as a numpy array
     low_threshold: int: Low threshold for brightness
     high_threshold: int: High threshold for brightness
-    
+
     Output:
     str: Brightness status of the image
     float: Brightness of the image
@@ -68,6 +74,7 @@ def check_brightness(image, low_threshold=50, high_threshold=200):
 
     return status, brightness
 
+
 def check_contrast(image, threshold=100):
     """
     check_contrast function checks the contrast of an image.
@@ -75,7 +82,7 @@ def check_contrast(image, threshold=100):
     Input:
     image: np.array: Image as a numpy array
     threshold: int: Threshold for the variance
-    
+
     Output:
     str: Contrast status of the image
     float: Contrast of the image
@@ -88,6 +95,7 @@ def check_contrast(image, threshold=100):
 
     return status, contrast
 
+
 def check_resolution(image, min_width=800, min_height=600):
     """
     check_resolution function checks the resolution of an image.
@@ -96,7 +104,7 @@ def check_resolution(image, min_width=800, min_height=600):
     image: np.array: Image as a numpy array
     min_width: int: Minimum width of the image
     min_height: int: Minimum height of the image
-    
+
     Output:
     str: Contrast status of the image
     float: Contrast of the image
@@ -109,6 +117,7 @@ def check_resolution(image, min_width=800, min_height=600):
 
     return status, [height, width]
 
+
 def detect_exposure(image, dark_threshold=0.2, bright_threshold=0.8):
     """
     detect_exposure function detects the exposure of an image.
@@ -117,7 +126,7 @@ def detect_exposure(image, dark_threshold=0.2, bright_threshold=0.8):
     image: np.array: Image as a numpy array
     dark_threshold: float: Threshold for dark pixels
     bright_threshold: float: Threshold for bright pixels
-    
+
     Output:
     str: Exposure status of the image
     """
@@ -135,6 +144,7 @@ def detect_exposure(image, dark_threshold=0.2, bright_threshold=0.8):
 
     return status
 
+
 def evaluate_image_quality(filename, image):
     """
     evaluate_image_quality function evaluates the quality of an image.
@@ -146,26 +156,36 @@ def evaluate_image_quality(filename, image):
     Output:
     pd.DataFrame: Image quality metrics
     """
-    return [filename, 
-    detect_blurriness(image)[1],
-    detect_noise(image)[1],
-    check_brightness(image)[1],
-    check_contrast(image)[1]]
+    return [
+        filename,
+        detect_blurriness(image)[1],
+        detect_noise(image)[1],
+        check_brightness(image)[1],
+        check_contrast(image)[1],
+    ]
+
 
 def get_images_quality(images_dir, margin_percentage=0):
     """
-    get_images_quality function evaluates the quality of an image.
+    get_images_quality function evaluates the
+    quality of an image.
 
     Input:
     images_dir: str: Path to the images directory
-    margin_percentage: int: Percentage of the image to be cropped from all sides
-    
+    margin_percentage: int: Percentage of the
+    image to be cropped from all sides
+
     Output:
     pd.DataFrame: Image quality metrics
     """
     data = []
     for filename in os.listdir(images_dir):
-        if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-            image = crop_image(os.path.join(images_dir, filename), margin_percentage)
+        if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
+            image = crop_image(
+                os.path.join(images_dir, filename), margin_percentage
+            )
             data.append(evaluate_image_quality(filename, image[0]))
-    return pd.DataFrame(data,columns = ['image','blurriness','noise','brightness','contrast'])
+    return pd.DataFrame(
+        data,
+        columns=["image", "blurriness", "noise", "brightness", "contrast"],
+    )

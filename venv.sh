@@ -43,7 +43,7 @@ function help(){
             clear: removes an existing virtual envrinoment.
             help: shows the available commands with examples.
 
-        Examples: 
+        Examples:
         source venv.sh create"
 }
 

@@ -1,9 +1,13 @@
-import cv2
+# -*- coding: utf-8 -*-
 import os
-import pandas as pd
+
+import cv2
 import numpy as np
+import pandas as pd
 from skimage.feature._hog import hog
+
 from src.preprocessing.image_preprocessor import apply_image_mask
+
 
 def get_detector(detector):
     """
@@ -16,20 +20,22 @@ def get_detector(detector):
     detector_method: cv2.Feature2D: Detector method
     """
     match detector:
-        case 'ORB':
-           detector_method = cv2.ORB_create() 
-        case 'SIFT':
+        case "ORB":
+            detector_method = cv2.ORB_create()
+        case "SIFT":
             detector_method = cv2.SIFT_create()
-        case 'Blob':
+        case "Blob":
             detector_method = cv2.SimpleBlobDetector_create()
-        case '':
-            raise TypeError('Detector not found')
+        case "":
+            raise TypeError("Detector not found")
     return detector_method
 
-def get_all_images_features(images_dir, masks_dir = None, method = 'ORB'):
+
+def get_all_images_features(images_dir, masks_dir=None, method="ORB"):
     """
-    get_all_images_features function returns the keypoints and descriptors of all images in a directory.
-    
+    get_all_images_features function returns the keypoints
+    and descriptors of all images in a directory.
+
     Input:
     images_dir: str: Path to the directory containing images
     method: str: Name of the detector to be used
@@ -37,7 +43,8 @@ def get_all_images_features(images_dir, masks_dir = None, method = 'ORB'):
     Output:
     keyPoints: list: List of keypoints
     descriptors: list: List of descriptors
-    data: pd.DataFrame: Dataframe containing image names and number of descriptors
+    data: pd.DataFrame: Dataframe containing image names
+    and number of descriptors
     """
     data = []
     keyPoints, descriptors = None, None
@@ -45,13 +52,27 @@ def get_all_images_features(images_dir, masks_dir = None, method = 'ORB'):
     detector_method = get_detector(method)
 
     for filename in os.listdir(images_dir):
-        if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
-            image = cv2.imread(os.path.join(images_dir, filename), cv2.COLOR_BGR2GRAY) \
-                if masks_dir is None else \
-                    apply_image_mask(os.path.join(images_dir, filename), os.path.join(masks_dir, filename))
-            keyPoints, descriptors = detector_method.detectAndCompute(image,None)
-            data.append([filename[:-4],len(keyPoints)]) 
-    return keyPoints, descriptors, pd.DataFrame(data,columns = ['image','keyPoints'])
+        if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
+            image = (
+                cv2.imread(
+                    os.path.join(images_dir, filename), cv2.COLOR_BGR2GRAY
+                )
+                if masks_dir is None
+                else apply_image_mask(
+                    os.path.join(images_dir, filename),
+                    os.path.join(masks_dir, filename),
+                )
+            )
+            keyPoints, descriptors = detector_method.detectAndCompute(
+                image, None
+            )
+            data.append([filename[:-4], len(keyPoints)])
+    return (
+        keyPoints,
+        descriptors,
+        pd.DataFrame(data, columns=["image", "keyPoints"]),
+    )
+
 
 def get_hog_features(image):
     """
@@ -59,15 +80,22 @@ def get_hog_features(image):
 
     Input:
     image: np.array: Image as a numpy array
-    
+
     Output:
     hog_features: np.array: HOG feature detector
     """
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    return hog(gray_image, orientations=9, pixels_per_cell=(4, 4),
-                                cells_per_block=(2, 2), block_norm='L2-Hys', visualize=True)
+    return hog(
+        gray_image,
+        orientations=9,
+        pixels_per_cell=(4, 4),
+        cells_per_block=(2, 2),
+        block_norm="L2-Hys",
+        visualize=True,
+    )
 
-def get_edges(original_image, method = 'Canny'):
+
+def get_edges(original_image, method="Canny"):
     """
     get_edges function returns the edges in the image.
 
@@ -85,26 +113,32 @@ def get_edges(original_image, method = 'Canny'):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     match method:
-        case 'Canny':
+        case "Canny":
             image_edges = cv2.Canny(gray_image, 50, 100)
             image[image_edges == 255] = (0, 255, 0)
-        case 'Harris':
-            image_edges = cv2.dilate(cv2.cornerHarris(gray_image, blockSize=2, ksize=3, k=0.04), None) 
-            image[image_edges > 0.05 * image_edges.max()] = [0, 255, 0] 
-        case 'Gaussian':
-            blur = cv2.GaussianBlur(gray_image, (0,0), sigmaX=33, sigmaY=33)
+        case "Harris":
+            image_edges = cv2.dilate(
+                cv2.cornerHarris(gray_image, blockSize=2, ksize=3, k=0.04),
+                None,
+            )
+            image[image_edges > 0.05 * image_edges.max()] = [0, 255, 0]
+        case "Gaussian":
+            blur = cv2.GaussianBlur(gray_image, (0, 0), sigmaX=33, sigmaY=33)
             image = cv2.divide(gray_image, blur, scale=255)
-            thresh = cv2.threshold(image, 5, 100, cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
-            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+            thresh = cv2.threshold(
+                image, 5, 100, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+            )[1]
+            kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             image_edges = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-        case '':
-            raise TypeError('Empty method')
+        case "":
+            raise TypeError("Empty method")
         case _:
-            raise TypeError(f'{method} not supported')
+            raise TypeError(f"{method} not supported")
 
     return original_image, image, image_edges
 
-def get_features(original_image, method = 'Good'):
+
+def get_features(original_image, method="Good"):
     """
     get_features function returns the features in the image.
 
@@ -120,35 +154,43 @@ def get_features(original_image, method = 'Good'):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     match method:
-        case 'Good':
-            image_features = cv2.goodFeaturesToTrack( 
-                gray_image, maxCorners=50, qualityLevel=0.02, minDistance=20) 
-            for item in image_features: 
-                x, y = item[0] 
-                x = int(x) 
-                y = int(y) 
-                cv2.circle(image, (x, y), 6, (0, 255, 0), -1) 
-        case 'Fast':
-            fast = cv2.FastFeatureDetector_create() 
-            fast.setNonmaxSuppression(False) 
-            kp = fast.detect(gray_image, None) 
+        case "Good":
+            image_features = cv2.goodFeaturesToTrack(
+                gray_image, maxCorners=50, qualityLevel=0.02, minDistance=20
+            )
+            for item in image_features:
+                x, y = item[0]
+                x = int(x)
+                y = int(y)
+                cv2.circle(image, (x, y), 6, (0, 255, 0), -1)
+        case "Fast":
+            fast = cv2.FastFeatureDetector_create()
+            fast.setNonmaxSuppression(False)
+            kp = fast.detect(gray_image, None)
             image = cv2.drawKeypoints(image, kp, None, color=(0, 255, 0))
-        case 'ORB' | 'SIFT':
+        case "ORB" | "SIFT":
             detector_method = get_detector(method)
-            keyPoints, _ = detector_method.detectAndCompute(image,None)
-            image = cv2.drawKeypoints(image, keyPoints, None, color=(0, 255, 0), flags=0)
-        case 'Blob':
+            keyPoints, _ = detector_method.detectAndCompute(image, None)
+            image = cv2.drawKeypoints(
+                image, keyPoints, None, color=(0, 255, 0), flags=0
+            )
+        case "Blob":
             detector_method = get_detector(method)
             keyPoints = detector_method.detect(image)
-            image = cv2.drawKeypoints(image, keyPoints, None, color=(0, 255, 0), flags=0) 
-        case '':
-            raise TypeError('Empty method')
+            image = cv2.drawKeypoints(
+                image, keyPoints, None, color=(0, 255, 0), flags=0
+            )
+        case "":
+            raise TypeError("Empty method")
         case _:
-            raise TypeError(f'{method} not supported')
+            raise TypeError(f"{method} not supported")
 
     return original_image, image
 
-def add_outline(image, kernel_size=(5,5), dilations=3, canny_low=30, canny_high=150):
+
+def add_outline(
+    image, kernel_size=(5, 5), dilations=3, canny_low=30, canny_high=150
+):
     """
     add_outline function returns the image with an outline.
 
@@ -173,6 +215,7 @@ def add_outline(image, kernel_size=(5,5), dilations=3, canny_low=30, canny_high=
 
     return outlined_image
 
+
 def segment_image(image, outlines):
     """
     segment_image function returns the segmented image.
@@ -185,7 +228,7 @@ def segment_image(image, outlines):
     np.array: Segmented image
     """
     new_mask = np.zeros_like(image)
-    for i,(_, outline_row) in enumerate(zip(image, outlines)):
+    for i, (_, outline_row) in enumerate(zip(image, outlines)):
         bounds = np.where(outline_row > 0)[0]
-        new_mask[i, bounds.min():bounds.max()] = 1
+        new_mask[i, bounds.min() : bounds.max()] = 1
     return image * new_mask

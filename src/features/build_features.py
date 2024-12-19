@@ -2,7 +2,7 @@ import cv2
 import os
 import pandas as pd
 import numpy as np
-from skimage.feature import hog
+from skimage.feature._hog import hog
 from src.preprocessing.image_preprocessor import apply_image_mask
 
 def get_detector(detector):

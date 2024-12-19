@@ -5,26 +5,26 @@ import numpy as np
 from skimage.feature import hog
 from src.preprocessing.image_preprocessor import apply_image_mask
 
-def get_descriptor(descriptor):
+def get_detector(detector):
     """
-    get_descriptor function returns the descriptor method.
+    get_detector function returns the detector method.
 
     Input:
-    descriptor: str: Name of the descriptor
+    detector: str: Name of the detector
 
     Output:
-    descriptor_method: cv2.Feature2D: Descriptor method
+    detector_method: cv2.Feature2D: Detector method
     """
-    match descriptor:
+    match detector:
         case 'ORB':
-           descriptor_method = cv2.ORB_create() 
+           detector_method = cv2.ORB_create() 
         case 'SIFT':
-            descriptor_method = cv2.SIFT_create()
+            detector_method = cv2.SIFT_create()
         case 'Blob':
-            descriptor_method = cv2.SimpleBlobDetector_create()
+            detector_method = cv2.SimpleBlobDetector_create()
         case '':
-            raise TypeError('Descriptor not found')
-    return descriptor_method
+            raise TypeError('Detector not found')
+    return detector_method
 
 def get_all_images_features(images_dir, masks_dir = None, method = 'ORB'):
     """
@@ -32,7 +32,7 @@ def get_all_images_features(images_dir, masks_dir = None, method = 'ORB'):
     
     Input:
     images_dir: str: Path to the directory containing images
-    method: str: Name of the descriptor to be used
+    method: str: Name of the detector to be used
 
     Output:
     keyPoints: list: List of keypoints
@@ -42,27 +42,26 @@ def get_all_images_features(images_dir, masks_dir = None, method = 'ORB'):
     data = []
     keyPoints, descriptors = None, None
 
-    descriptor_method = get_descriptor(method)
+    detector_method = get_detector(method)
 
     for filename in os.listdir(images_dir):
         if filename.endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
             image = cv2.imread(os.path.join(images_dir, filename), cv2.COLOR_BGR2GRAY) \
                 if masks_dir is None else \
                     apply_image_mask(os.path.join(images_dir, filename), os.path.join(masks_dir, filename))
-            keyPoints, descriptors = descriptor_method.detectAndCompute(image,None)
-            get_descriptors = lambda x: x.shape[0] if x is not None else 0
-            data.append([filename[:-4],get_descriptors(descriptors)]) 
-    return keyPoints, descriptors, pd.DataFrame(data,columns = ['image','descriptors'])
+            keyPoints, descriptors = detector_method.detectAndCompute(image,None)
+            data.append([filename[:-4],len(keyPoints)]) 
+    return keyPoints, descriptors, pd.DataFrame(data,columns = ['image','keyPoints'])
 
 def get_hog_features(image):
     """
-    get_hog_features function returns the HOG feature descriptor.
+    get_hog_features function returns the HOG feature detector.
 
     Input:
     image: np.array: Image as a numpy array
     
     Output:
-    hog_features: np.array: HOG feature descriptor
+    hog_features: np.array: HOG feature detector
     """
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     return hog(gray_image, orientations=9, pixels_per_cell=(4, 4),
@@ -135,12 +134,12 @@ def get_features(original_image, method = 'Good'):
             kp = fast.detect(gray_image, None) 
             image = cv2.drawKeypoints(image, kp, None, color=(0, 255, 0))
         case 'ORB' | 'SIFT':
-            descriptor_method = get_descriptor(method)
-            keyPoints, _ = descriptor_method.detectAndCompute(image,None)
+            detector_method = get_detector(method)
+            keyPoints, _ = detector_method.detectAndCompute(image,None)
             image = cv2.drawKeypoints(image, keyPoints, None, color=(0, 255, 0), flags=0)
         case 'Blob':
-            descriptor_method = get_descriptor(method)
-            keyPoints = descriptor_method.detect(image)
+            detector_method = get_detector(method)
+            keyPoints = detector_method.detect(image)
             image = cv2.drawKeypoints(image, keyPoints, None, color=(0, 255, 0), flags=0) 
         case '':
             raise TypeError('Empty method')

@@ -20,6 +20,8 @@ def get_descriptor(descriptor):
            descriptor_method = cv2.ORB_create() 
         case 'SIFT':
             descriptor_method = cv2.SIFT_create()
+        case 'Blob':
+            descriptor_method = cv2.SimpleBlobDetector_create()
         case '':
             raise TypeError('Descriptor not found')
     return descriptor_method
@@ -135,6 +137,10 @@ def get_features(original_image, method = 'Good'):
         case 'ORB' | 'SIFT':
             descriptor_method = get_descriptor(method)
             keyPoints, _ = descriptor_method.detectAndCompute(image,None)
+            image = cv2.drawKeypoints(image, keyPoints, None, color=(0, 255, 0), flags=0)
+        case 'Blob':
+            descriptor_method = get_descriptor(method)
+            keyPoints = descriptor_method.detect(image)
             image = cv2.drawKeypoints(image, keyPoints, None, color=(0, 255, 0), flags=0) 
         case '':
             raise TypeError('Empty method')

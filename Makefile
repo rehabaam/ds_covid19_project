@@ -15,10 +15,6 @@ freeze:
 #---------------------------------------------------
 # Targets to run the model pipeline
 #---------------------------------------------------
-# Download the data
-download:
-	python -m src.data.download
-
 # Preprocess the data
 preprocess:
 	python -m src.preprocess.build_features
@@ -30,6 +26,12 @@ train:
 # Make predictions on the test data
 test:
 	python -m src.model.predict
+
+# Create reports
+html-reports:
+	echo "Creating reports..."
+	find reports/ -type f -name "*.html" -delete
+	jupyter nbconvert --to html notebooks/*.ipynb --output-dir=reports
 
 # Evaluate performance
 evaluate:

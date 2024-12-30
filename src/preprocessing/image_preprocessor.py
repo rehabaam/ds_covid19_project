@@ -93,7 +93,7 @@ def get_images_statistics(images_dir, margin_percentage=0):
     )
 
 
-def get_images_edges_statistics(images_dir, margin_percentage=0):
+def get_edges_images_statistics(images_dir, margin_percentage=0):
     """
     get_images_edges_statistics function returns the
     number of images in the directory.
@@ -116,6 +116,30 @@ def get_images_edges_statistics(images_dir, margin_percentage=0):
                 cv2.convertScaleAbs(x), 0.5, cv2.convertScaleAbs(y), 0.5, 0
             )
             data.append(calulate_image_statistics(filename, edge))
+    return pd.DataFrame(
+        data, columns=["image", "min", "max", "mean", "median", "std"]
+    )
+
+
+def get_masked_images_statistics(images_dir, mask_dir):
+    """
+    get_masked_images_statistics function returns the
+    stastics of masked images in the directory.
+
+    Input:
+    images_dir: str: Path to the directory containing images
+    mask_dir: str: Path to the directory containing masks
+    margin_percentage: int: Percentage of the image
+    to be cropped from all sides
+    """
+    data = []
+    for filename in os.listdir(images_dir):
+        if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
+            image = apply_image_mask(
+                os.path.join(images_dir, filename),
+                os.path.join(mask_dir, filename),
+            )
+            data.append(calulate_image_statistics(filename, image[0]))
     return pd.DataFrame(
         data, columns=["image", "min", "max", "mean", "median", "std"]
     )

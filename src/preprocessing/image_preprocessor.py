@@ -2,8 +2,10 @@
 import os
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 
 def crop_image(image_path, margin_percentage=10):
@@ -158,14 +160,37 @@ def store_images_statistics(images_data, csv_filename):
     images_data.to_csv(csv_filename)
 
 
-def plot_images_statistics(dataset, stats):
+def plot_images_statistics(dataset, stats, no_of_cols=2):
     """
     plot_images_statistics function plots the image statistics.
 
     Input:
     dataset: str: Name of the dataset
     stats: pd.DataFrame: DataFrame containing image statistics
+    no_of_cols: int: Number of columns in the plot
     """
-    stats.plot.hist(
-        subplots=True, layout=(3, 3), figsize=(15, 15), bins=20, title=dataset
-    )
+
+    # Select only numerical columns
+    stats = stats.select_dtypes(exclude=["object"])
+
+    # Calculate the number of rows
+    no_of_rows = int(len(stats.columns) // 2 + 1)
+
+    # Plot the image statistics
+    _, axs = plt.subplots(no_of_rows, no_of_cols, figsize=(10, 10))
+    plt.suptitle(f"{dataset} Image Statistics")
+
+    for i in range(len(stats.columns)):
+        fig_index = (
+            axs[i // no_of_cols, i % no_of_cols] if no_of_rows > 1 else axs
+        )
+        sns.histplot(data=stats.iloc[:, i], bins=50, kde=True, ax=fig_index)
+        fig_index.set_title(stats.columns[i])
+        fig_index.set_xlabel("")
+
+    # Remove empty subplots
+    if no_of_rows > 1:
+        [plt.delaxes(ax) for ax in axs.flatten() if not ax.has_data()]
+    # Display the subplots
+    plt.tight_layout()
+    plt.show()

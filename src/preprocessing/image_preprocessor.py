@@ -35,18 +35,23 @@ def crop_image(image_path, margin_percentage=10):
     return cropped_image, gray
 
 
-def apply_image_mask(image_path, mask_path):
+def apply_image_mask(image_path, mask_path, target="lungs"):
     """
     apply_image_mask function plots the image statistics.
 
     Input:
     image_path: str: Path to the image file
     mask_path: str: Path to the mask file
+    target: str: Target to be masked
 
     Output:
     masked_image: np.array: Masked image as a numpy array
     """
-    image = cv2.imread(image_path)
+    image = (
+        255 - cv2.imread(image_path)
+        if target == "lungs"
+        else cv2.imread(image_path)
+    )
 
     mask = cv2.imread(mask_path)
     mask = cv2.resize(mask, image.shape[:2])

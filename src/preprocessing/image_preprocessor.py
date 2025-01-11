@@ -199,3 +199,62 @@ def plot_images_statistics(dataset, stats, no_of_cols=2):
     # Display the subplots
     plt.tight_layout()
     plt.show()
+
+
+def normalize_image(image):
+    """
+    normalize_image function normalizes the image.
+
+    Input:
+    image: np.array: Image as a numpy array
+
+    Output:
+    normalized_image: np.array: Normalized image as a numpy array
+    """
+    return (image - np.min(image)) / (np.max(image) - np.min(image))
+
+
+def standardize_image(image):
+    """
+    standardize_image function standardizes the image.
+
+    Input:
+    image: np.array: Image as a numpy array
+
+    Output:
+    standardized_image: np.array: Standardized image as a numpy array
+    """
+    return (image - np.mean(image)) / np.std(image)
+
+
+def get_images_statistics_by_scales(images_dir, margin_percentage=0):
+    """
+    get_images_statustics function returns the number
+    of images in the directory.
+
+    Input:
+    images_dir: str: Path to the directory containing images
+    margin_percentage: int: Percentage of the image to
+    be cropped from all sides
+    """
+    normalized = []
+    standardized = []
+    for filename in os.listdir(images_dir):
+        if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
+            image = crop_image(
+                os.path.join(images_dir, filename), margin_percentage
+            )
+            normalized_image = normalize_image(image[0])
+            normalized.append(
+                calulate_image_statistics(filename, normalized_image)
+            )
+
+            standardized_image = standardize_image(image[0])
+            standardized.append(
+                calulate_image_statistics(filename, standardized_image)
+            )
+    return pd.DataFrame(
+        normalized, columns=["image", "min", "max", "mean", "median", "std"]
+    ), pd.DataFrame(
+        standardized, columns=["image", "min", "max", "mean", "median", "std"]
+    )

@@ -4,6 +4,7 @@ import os
 import cv2
 import numpy as np
 import pandas as pd
+from skimage.restoration import estimate_sigma
 
 from .image_preprocessor import crop_image
 
@@ -188,4 +189,54 @@ def get_images_quality(images_dir, margin_percentage=0):
     return pd.DataFrame(
         data,
         columns=["image", "blurriness", "noise", "brightness", "contrast"],
+    )
+
+
+def calculate_snr(filename, image):
+    """
+    calculate_snr function calculates the signal-to-noise ratio of an image.
+
+    Input:
+    filename: str: Name of the image file
+    image: np.array: Image as a numpy array
+
+    Output:
+    float: Signal-to-noise ratio of the image
+    """
+
+    signal_power = np.mean(image**2)
+    # Here, we use the skimage method to estimate noise assuming Gaussian noise
+    sigma = estimate_sigma(
+        image, channel_axis=None
+    )  # Noise standard deviation
+    noise_power = sigma**2
+
+    snr = 10 * np.log10(signal_power / noise_power)
+
+    return filename, snr
+
+
+def get_images_snr(images_dir, margin_percentage=0):
+    """
+    get_images_snr function calculates the
+    signal-to-noise ratio of an image.
+
+    Input:
+    images_dir: str: Path to the images directory
+    margin_percentage: int: Percentage of the
+    image to be cropped from all sides
+
+    Output:
+    pd.DataFrame: Image quality metrics
+    """
+    data = []
+    for filename in os.listdir(images_dir):
+        if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
+            image = crop_image(
+                os.path.join(images_dir, filename), margin_percentage
+            )
+            data.append(calculate_snr(filename, image[0]))
+    return pd.DataFrame(
+        data,
+        columns=["image", "snr"],
     )

@@ -2,7 +2,7 @@
 import os
 
 import pandas as pd
-from skimage.feature import graycomatrix, graycoprops
+from skimage.feature.texture import graycomatrix, graycoprops
 
 from .image_preprocessor import crop_image
 

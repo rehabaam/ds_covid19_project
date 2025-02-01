@@ -45,6 +45,7 @@ def extract_features(image):
     dissimilarity = graycoprops(glcm, "dissimilarity")[0, 0]
     homogeneity = graycoprops(glcm, "homogeneity")[0, 0]
     energy = graycoprops(glcm, "energy")[0, 0]
+    entropy = graycoprops(glcm, "entropy")[0, 0]
 
     # Combine features into a vector
     features = [
@@ -61,6 +62,7 @@ def extract_features(image):
         dissimilarity,
         homogeneity,
         energy,
+        entropy,
     ]
 
     return features

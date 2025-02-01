@@ -1,52 +1,52 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.9 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.9" pages="3">
   <diagram name="Main" id="ciMXtin28pvy9Z-R5EFE">
-    <mxGraphModel dx="1026" dy="663" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+    <mxGraphModel dx="2074" dy="1214" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="xK0dbAxCh4vP_NzFNWeG-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cemaSmMLVrujW-6_Jvu3-1" target="cemaSmMLVrujW-6_Jvu3-2">
+        <mxCell id="xK0dbAxCh4vP_NzFNWeG-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cemaSmMLVrujW-6_Jvu3-1" target="cemaSmMLVrujW-6_Jvu3-2" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="xK0dbAxCh4vP_NzFNWeG-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cemaSmMLVrujW-6_Jvu3-1" target="cemaSmMLVrujW-6_Jvu3-3">
+        <mxCell id="xK0dbAxCh4vP_NzFNWeG-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cemaSmMLVrujW-6_Jvu3-1" target="cemaSmMLVrujW-6_Jvu3-3" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="xK0dbAxCh4vP_NzFNWeG-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cemaSmMLVrujW-6_Jvu3-1" target="xK0dbAxCh4vP_NzFNWeG-1">
+        <mxCell id="xK0dbAxCh4vP_NzFNWeG-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cemaSmMLVrujW-6_Jvu3-1" target="xK0dbAxCh4vP_NzFNWeG-1" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-1" value="Covid models" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-1" value="Covid models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
           <mxGeometry x="540" y="258" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cemaSmMLVrujW-6_Jvu3-2" target="cemaSmMLVrujW-6_Jvu3-6">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cemaSmMLVrujW-6_Jvu3-2" target="cemaSmMLVrujW-6_Jvu3-6" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cemaSmMLVrujW-6_Jvu3-2" target="cemaSmMLVrujW-6_Jvu3-7">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cemaSmMLVrujW-6_Jvu3-2" target="cemaSmMLVrujW-6_Jvu3-7" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-2" value="Supervised&amp;nbsp;&lt;div&gt;models&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-2" value="Supervised&amp;nbsp;&lt;div&gt;models&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
           <mxGeometry x="165" y="388" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cemaSmMLVrujW-6_Jvu3-3" target="cemaSmMLVrujW-6_Jvu3-11">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="cemaSmMLVrujW-6_Jvu3-3" target="cemaSmMLVrujW-6_Jvu3-11" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="cemaSmMLVrujW-6_Jvu3-3" target="cemaSmMLVrujW-6_Jvu3-12">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="cemaSmMLVrujW-6_Jvu3-3" target="cemaSmMLVrujW-6_Jvu3-12" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-3" value="Unsupervised&amp;nbsp;&lt;div&gt;models&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-3" value="Unsupervised&amp;nbsp;&lt;div&gt;models&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
           <mxGeometry x="540" y="388" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-6" value="Basic models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-6" value="Basic models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
           <mxGeometry x="75" y="533" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-7" value="Advanced models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-7" value="Advanced models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="255" y="533" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-11" value="Basic models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-11" value="Basic models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" parent="1" vertex="1">
           <mxGeometry x="450" y="533" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="cemaSmMLVrujW-6_Jvu3-12" value="Advanced models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+        <mxCell id="cemaSmMLVrujW-6_Jvu3-12" value="Advanced models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
           <mxGeometry x="630" y="533" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="xK0dbAxCh4vP_NzFNWeG-1" value="Covid specialized models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bac8d3;strokeColor=#23445d;" vertex="1" parent="1">
+        <mxCell id="xK0dbAxCh4vP_NzFNWeG-1" value="Covid specific models" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bac8d3;strokeColor=#23445d;" parent="1" vertex="1">
           <mxGeometry x="905" y="388" width="120" height="60" as="geometry" />
         </mxCell>
       </root>

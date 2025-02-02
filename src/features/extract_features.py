@@ -68,37 +68,49 @@ def extract_features(image):
     return features
 
 
-def get_extracted_features(images_dir, label):
+def get_extracted_features(images_dir, label, image_size, image_resized=False):
     """
     get_extracted_features Loads images from a folder and extracts features.
 
     Input:
     images_dir: str: Path to the folder containing images
     label: int: Label for the images
+    image_size: int: Size of the image
+    image_resized: bool: Resize the image
 
     Output:
     feature_list: np.array: List of extracted features
     """
     features = []
     labels = []
+    image_list = []
 
     for filename in os.listdir(images_dir):
         if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
             image = crop_image(os.path.join(images_dir, filename), 0)
-
+            if image_resized:
+                img_resized = (
+                    cv2.resize(image[1], (image_size, image_size)) / 255.0
+                )
+                image_list.append(img_resized)
             features.append(extract_features(image[1]))
             labels.append(label)
 
-    return features, labels
+    return features, labels, image_list
 
 
-def load_extracted_features(images_dir, category, dataset_label):
+def load_extracted_features(
+    images_dir, category, dataset_label, image_size=128, image_resized=False
+):
     """
     load_extracted_features Loads images from a folder and extracts features.
 
     Input:
     images_dir: str: Path to the folder containing images
+    category: str or list: Category of the images
     label: int: Label for the images
+    image_size: int: Size of the image (Default is 128)
+    image_resized: bool: Resize the image
 
     Output:
     features: np.array: List of extracted features
@@ -106,26 +118,31 @@ def load_extracted_features(images_dir, category, dataset_label):
     """
     features = []
     labels = []
+    image_list = []
 
     match type(category):
         case builtins.str:
             images_dir = images_dir.replace("{}", category)
-            features, labels = get_extracted_features(
-                images_dir, dataset_label
+            features, labels, image_list = get_extracted_features(
+                images_dir, dataset_label, image_size, image_resized
             )
         case builtins.list:
             for cat in category:
-                feature, label = get_extracted_features(
-                    images_dir.replace("{}", cat), dataset_label
+                feature, label, image = get_extracted_features(
+                    images_dir.replace("{}", cat),
+                    dataset_label,
+                    image_size,
+                    image_resized,
                 )
                 features.extend(feature)
                 labels.extend(label)
+                image_list.extend(image)
         case _:
             raise TypeError("Wrong category used")
 
     print(
-        "Loaded images for {}: {} features and {} labels".format(
-            category, len(features), len(labels)
+        "Loaded images for {}: {} resized images, {} features, and {} labels.".format(
+            category, len(image_list), len(features), len(labels)
         )
     )
-    return np.array(features), np.array(labels)
+    return np.array(features), np.array(labels), np.array(image_list)

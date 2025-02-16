@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-# -*- coding: utf-8 -*-
 import builtins
 import os
 
@@ -9,7 +7,7 @@ import numpy as np
 from scipy.stats import kurtosis, skew
 from skimage.feature.texture import graycomatrix, graycoprops
 
-from src.preprocessing.image_preprocessor import crop_image
+from src.preprocessing.image_augmentor import generate_augmented_images
 
 
 # Function to extract basic statistical features from an image
@@ -68,39 +66,67 @@ def extract_features(image):
     return features
 
 
-def get_extracted_features(images_dir, label, image_size, image_resized=False):
+def get_extracted_features(
+    images_dir,
+    label,
+    samples,
+    random_seed,
+    image_size,
+    image_resized,
+    augmentor,
+):
     """
     get_extracted_features Loads images from a folder and extracts features.
 
     Input:
     images_dir: str: Path to the folder containing images
     label: int: Label for the images
+    samples: int: Number of samples to load
+    random_seed: int: Random seed for reproducibility
     image_size: int: Size of the image
     image_resized: bool: Resize the image
+    augmentor: bool: Augment the images
 
     Output:
     feature_list: np.array: List of extracted features
+    labels: np.array: List of labels
+    image_list: np.array: List of images
     """
     features = []
     labels = []
     image_list = []
+    images = []
 
     for filename in os.listdir(images_dir):
         if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
-            image = crop_image(os.path.join(images_dir, filename), 0)
-            if image_resized:
-                img_resized = (
-                    cv2.resize(image[1], (image_size, image_size)) / 255.0
-                )
-                image_list.append(img_resized)
-            features.append(extract_features(image[1]))
-            labels.append(label)
+            image = cv2.imread(os.path.join(images_dir, filename))
+            images.append(image)
+
+    if augmentor and samples > 0:
+        images = generate_augmented_images(images, samples, random_seed)
+
+    for image in images:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        features.append(extract_features(gray))
+        labels.append(label)
+        if image_resized:
+            img_resized = cv2.resize(gray, (image_size, image_size)) / 255.0
+            image_list.append(img_resized)
+        else:
+            image_list.append(image)
 
     return features, labels, image_list
 
 
 def load_extracted_features(
-    images_dir, category, dataset_label, image_size=128, image_resized=False
+    images_dir,
+    category,
+    dataset_label,
+    samples=0,
+    random_seed=0,
+    image_size=128,
+    image_resized=False,
+    augmentor=False,
 ):
     """
     load_extracted_features Loads images from a folder and extracts features.
@@ -109,8 +135,11 @@ def load_extracted_features(
     images_dir: str: Path to the folder containing images
     category: str or list: Category of the images
     label: int: Label for the images
+    samples: int: Number of samples to load
+    random_seed: int: Random seed for reproducibility
     image_size: int: Size of the image (Default is 128)
     image_resized: bool: Resize the image
+    augmentor: bool: Augment the images
 
     Output:
     features: np.array: List of extracted features
@@ -124,15 +153,24 @@ def load_extracted_features(
         case builtins.str:
             images_dir = images_dir.replace("{}", category)
             features, labels, image_list = get_extracted_features(
-                images_dir, dataset_label, image_size, image_resized
+                images_dir,
+                dataset_label,
+                samples,
+                random_seed,
+                image_size,
+                image_resized,
+                augmentor,
             )
         case builtins.list:
             for cat in category:
                 feature, label, image = get_extracted_features(
                     images_dir.replace("{}", cat),
                     dataset_label,
+                    samples,
+                    random_seed,
                     image_size,
                     image_resized,
+                    augmentor,
                 )
                 features.extend(feature)
                 labels.extend(label)

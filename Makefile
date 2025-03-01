@@ -47,10 +47,23 @@ all: download preprocess train test evaluate visualize
 #---------------------------------------------------
 # Running unit tests
 #---------------------------------------------------
-## Delete all compiled Python files
+## Run all tests
 unit-tests:
 	pytest
 
+#---------------------------------------------------
+# Running MLFlow server locally
+#---------------------------------------------------
+## Start MLFLow server
+mlflow-start:
+	@echo "Start MLflow Server..."
+	mlflow server --host 127.0.0.1 --port 8080 &
+	@echo "MLflow Server Started!"
+
+mlflow-stop:
+	@echo "Stopping MLflow Server..."
+	@pkill -f "gunicorn" || echo "MLflow is not running."
+	@echo "MLflow Server Stopped!"
 #---------------------------------------------------
 # Cleaning folders
 #---------------------------------------------------

@@ -64,3 +64,12 @@ To check that all your files follow proper standards, execute this command manua
 ```bash
 pre-commit run --all-files
 ```
+### Run MLFlow
+To start MLFlow, execute this command manually as the following:
+```bash
+make mlflow-start
+```
+To stop MLFlow, execute this command manually as the following:
+```bash
+make mlflow-stop
+```

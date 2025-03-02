@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
+    mean_absolute_error,
     mean_squared_error,
     r2_score,
 )
 from sklearn.svm import SVC
-from tensorflow.keras import Model, layers
+from tensorflow.keras import Model
 from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.layers import (
-    Concatenate,
     Conv2D,
     Dense,
     Dropout,
@@ -19,9 +21,12 @@ from tensorflow.keras.layers import (
     GlobalAveragePooling2D,
     Input,
     MaxPooling2D,
-    Reshape,
+    Rescaling,
+    Resizing,
 )
 from tensorflow.keras.optimizers import Adam
+
+from src.common.mlflow_manager import log_model
 
 
 def train_basic_supervised_model(
@@ -56,7 +61,7 @@ def train_basic_supervised_model(
 
 
 def train_advanced_supervised_model(
-    X_train, y_train, X_test, y_test, X_input, epochs, model_type="CNN"
+    X_train, y_train, image_size, epochs, model_type="CNN"
 ):
     """
     train_advanced_supervised_model Trains a model on the data
@@ -66,7 +71,7 @@ def train_advanced_supervised_model(
     y_train: np.array: Labels
     X_test: np.array: Features
     y_test: np.array: Labels
-    X_input: np.array: Features
+    image_size: int: Size of the image
     epochs: int: Number of epochs to train
     model_type: str: Type of model to train
 
@@ -75,36 +80,23 @@ def train_advanced_supervised_model(
     history: history: Training history
     """
 
-    if len(X_train) != 2 or len(X_input) != 2 or len(X_test) != 2:
-        raise ValueError("Invalid input shape")
-
     match model_type:
         case "CNN":
-            # Image Model
-            input_img = Input(shape=(X_input[0], X_input[0], 1))
-            x = Conv2D(32, (3, 3), activation="relu", padding="same")(
-                input_img
-            )
-            x = MaxPooling2D(pool_size=(2, 2))(x)
-            x = Conv2D(64, (3, 3), activation="relu", padding="same")(x)
-            x = MaxPooling2D(pool_size=(2, 2))(x)
-            x = Conv2D(128, (3, 3), activation="relu", padding="same")(x)
-            x = MaxPooling2D(pool_size=(2, 2))(x)
+            inputs = Input(shape=(image_size, image_size, 1))
+            x = Resizing(256, 256)(inputs)
+            x = Rescaling(1.0 / 255)(x)
+
+            x = Conv2D(32, (5, 5), padding="same", activation="relu")(x)
+            x = MaxPooling2D((2, 2))(x)
+            x = Dropout(0.2)(x)
+
             x = Flatten()(x)
+            x = Dense(128, activation="relu")(x)
 
-            # Dense Features Model
-            input_features = Input(shape=(X_input[1],))
-            feat_dense = Dense(32, activation="relu")(input_features)
-            feat_dense = Dropout(0.2)(feat_dense)
+            outputs = Dense(1, activation="sigmoid")(x)
 
-            # Merge CNN and Statistical Features
-            merged = Concatenate()([x, feat_dense])
-            merged = Dense(64, activation="relu")(merged)
-            merged = Dropout(0.3)(merged)
-            output = Dense(1, activation="sigmoid")(merged)
+            model = Model(inputs=inputs, outputs=outputs)
 
-            # Define Model
-            model = Model(inputs=[input_img, input_features], outputs=output)
             model.compile(
                 optimizer="adam",
                 loss="binary_crossentropy",
@@ -117,7 +109,7 @@ def train_advanced_supervised_model(
             base_model = EfficientNetB0(
                 weights="imagenet",
                 include_top=False,
-                input_shape=(X_input[0], X_input[0], 3),
+                input_shape=(image_size, image_size, 3),
             )
             # Freeze pre-trained layers to retain learned features
             base_model.trainable = False
@@ -125,26 +117,13 @@ def train_advanced_supervised_model(
             # Extract deep features
             x = base_model.output
             x = GlobalAveragePooling2D()(x)
-            deep_features = Dense(128, activation="relu")(x)
-            deep_features = Dropout(0.3)(deep_features)
+            x = Dense(128, activation="relu")(x)
+            x = Dropout(0.3)(x)
 
-            # Dense model for statistical features
-            input_features = Input(shape=(X_input[1],))
-            feat_dense = Dense(32, activation="relu")(input_features)
-            feat_dense = Dropout(0.2)(feat_dense)
-
-            # Merge deep features and statistical features
-            merged = layers.Concatenate()([deep_features, feat_dense])
-            merged = Dense(64, activation="relu")(merged)
-            merged = Dropout(0.3)(merged)
-            output = Dense(1, activation="sigmoid")(
-                merged
-            )  # Binary classification
+            output = Dense(1, activation="sigmoid")(x)  # Binary classification
 
             # Define the final model
-            model = Model(
-                inputs=[base_model.input, input_features], outputs=output
-            )
+            model = Model(inputs=base_model.input, outputs=output)
 
             # Compile model
             model.compile(
@@ -155,67 +134,33 @@ def train_advanced_supervised_model(
 
             # Model Summary
             model.summary()
-
-        case "Capsule Network":
-            # Image Model
-            input_img = Input(shape=(X_input[0], X_input[0], 1))
-
-            # First convolutional layer
-            conv1 = Conv2D(64, (3, 3), activation="relu", padding="same")(
-                input_img
-            )
-
-            # Primary Capsule Layerer
-            x = Conv2D(32, (3, 3), activation="relu", padding="same")(conv1)
-            x = Flatten()(x)
-            correct_shape = x.shape[-1] // 32  # 32 is the number of capsules
-            x = Reshape((32, correct_shape))(x)  # 32 capsules of 64 dimensions
-
-            # Fully Connected Capsule Layer
-            x = Dense(128, activation="relu")(x)
-            x = Flatten()(x)
-
-            img_model = Model(input_img, x)
-
-            # Dense Features Model
-            input_features = Input(shape=(X_input[1],))
-            feat_dense = Dense(32, activation="relu")(input_features)
-            feat_dense = Dropout(0.2)(feat_dense)
-
-            # Merge CNN and Statistical Features
-            merged = Concatenate()([img_model.output, feat_dense])
-            merged = Dense(64, activation="relu")(merged)
-            merged = Dropout(0.3)(merged)
-            output = Dense(1, activation="sigmoid")(merged)
-
-            # Define Model
-            model = Model(
-                inputs=[img_model.input, input_features], outputs=output
-            )
-            model.compile(
-                optimizer=Adam(learning_rate=0.0001),
-                loss="binary_crossentropy",
-                metrics=["accuracy"],
-            )
-
-            # Model Summary
-            model.summary()
         case _:
             raise ValueError("Invalid model type")
+
+    reduce_lr = ReduceLROnPlateau(
+        monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5, verbose=1
+    )
+    early_stop = EarlyStopping(
+        monitor="val_loss", patience=5, restore_best_weights=True, verbose=1
+    )
     return model, model.fit(
         X_train,
         y_train,
-        validation_data=(X_test, y_test),
+        validation_split=0.2,
         epochs=epochs,
-        batch_size=16,
+        batch_size=32,
+        callbacks=[reduce_lr, early_stop],
     )
 
 
-def evaluate_model(model, X_test, y_test, model_type="Logistic Regression"):
+def evaluate_model(
+    description, model, X_test, y_test, model_type="Logistic Regression"
+):
     """
     evaluate_model Evaluates a model on the data
 
     Input:
+    description: str: Description of the dataset
     model: model: Trained model
     X_test: np.array: Features
     y_test: np.array: Labels
@@ -225,27 +170,55 @@ def evaluate_model(model, X_test, y_test, model_type="Logistic Regression"):
     accuracy: float: Accuracy of the model
     classification_report: str: Classification report
     """
-
     match model_type:
         case "Logistic Regression":
             y_pred = model.predict(X_test)
         case "Linear Regression":
             y_pred_binary = model.predict(X_test)
             y_pred = (y_pred_binary > 0.5).astype(int)  # Threshold at 0.5
-
-            mse = mean_squared_error(y_test, y_pred)
-            r2 = r2_score(y_test, y_pred)
-            print(f"Mean Squared Error (MSE): {mse:.4f}")
-            print(f"R-squared (R²) Score: {r2:.4f}")
-        case "SVM":
+        case "SVM Linear" | "SVM RBF":
             y_pred = model.predict(X_test)
         case "Random Forest":
             y_pred = model.predict(X_test)
-        case "CNN" | "Transfer Learning" | "Capsule Network":
-            return model.evaluate(X_test, y_test)
+        case "CNN" | "Transfer Learning":
+            loss, accuracy = model.evaluate(X_test, y_test)
+            metrics = {
+                "loss": loss,
+                "accuracy": accuracy,
+            }
+
+            log_model(
+                "Advanced Supervised Models",
+                "tensorflow",
+                description,
+                model,
+                model_type,
+                X_test,
+                metrics,
+            )
+            return loss, accuracy
         case _:
             raise ValueError("Invalid model type")
 
-    return accuracy_score(y_test, y_pred), classification_report(
-        y_test, y_pred
+    # Log the model
+    accuracy = accuracy_score(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    metrics = {
+        "mae": mean_absolute_error(y_test, y_pred),
+        "mse": mse,
+        "rmse": np.sqrt(mse),
+        "r2": r2_score(y_test, y_pred),
+        "accuracy": accuracy,
+    }
+
+    log_model(
+        "Basic Supervised Models",
+        "sklearn",
+        description,
+        model,
+        model_type,
+        X_test,
+        metrics,
     )
+
+    return accuracy, classification_report(y_test, y_pred)

@@ -144,6 +144,7 @@ def load_extracted_features(
     Output:
     features: np.array: List of extracted features
     labels: np.array: List of labels
+    image_list: np.array: List of images
     """
     features = []
     labels = []

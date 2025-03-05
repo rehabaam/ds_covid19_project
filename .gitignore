@@ -7,6 +7,10 @@
 .drawio.bkp
 **/*.drawio.bkp
 
+# Ignore pre-trained models
+**/*.pth
+**/*.hdf5
+
 # Ignore MLflow folder and files
 mlruns
 **/mlruns

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+from catboost import CatBoostClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import (
@@ -46,7 +47,13 @@ def train_basic_supervised_model(
 
     match model_type:
         case "Logistic Regression":
-            model = LogisticRegression()
+            model = LogisticRegression(
+                C=0.1,
+                class_weight=None,
+                max_iter=100,
+                penalty="l1",
+                solver="liblinear",
+            )
         case "Linear Regression":
             model = LinearRegression()
         case "SVM Linear":
@@ -54,7 +61,22 @@ def train_basic_supervised_model(
         case "SVM RBF":
             model = SVC(kernel="rbf")
         case "Random Forest":
-            model = RandomForestClassifier(n_estimators=100, random_state=42)
+            model = RandomForestClassifier(
+                n_estimators=500,
+                max_depth=20,
+                min_samples_split=2,
+                min_samples_leaf=1,
+                max_features="sqrt",
+                class_weight=None,
+            )
+        case "CatBoost":
+            model = CatBoostClassifier(
+                iterations=500,
+                depth=6,
+                learning_rate=0.05,
+                loss_function="Logloss",
+                verbose=100,
+            )
         case _:
             raise ValueError("Invalid model type")
     return model.fit(X_train, y_train)
@@ -179,6 +201,8 @@ def evaluate_model(
         case "SVM Linear" | "SVM RBF":
             y_pred = model.predict(X_test)
         case "Random Forest":
+            y_pred = model.predict(X_test)
+        case "CatBoost":
             y_pred = model.predict(X_test)
         case "CNN" | "Transfer Learning":
             loss, accuracy = model.evaluate(X_test, y_test)

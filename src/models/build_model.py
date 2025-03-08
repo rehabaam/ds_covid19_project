@@ -77,6 +77,14 @@ def train_basic_supervised_model(
                 loss_function="Logloss",
                 verbose=100,
             )
+        case "CatBoost_Multi":
+            model = CatBoostClassifier(
+                iterations=500,
+                depth=6,
+                learning_rate=0.05,
+                loss_function="MultiClass",
+                verbose=100,
+            )
         case _:
             raise ValueError("Invalid model type")
     return model.fit(X_train, y_train)
@@ -127,6 +135,30 @@ def train_advanced_supervised_model(
 
             # Model Summary
             model.summary()
+        case "CNN_Multi":
+            inputs = Input(shape=(image_size, image_size, 1))
+            x = Resizing(256, 256)(inputs)
+            x = Rescaling(1.0 / 255)(x)
+
+            x = Conv2D(32, (5, 5), padding="same", activation="relu")(x)
+            x = MaxPooling2D((2, 2))(x)
+            x = Dropout(0.2)(x)
+
+            x = Flatten()(x)
+            x = Dense(128, activation="relu")(x)
+
+            outputs = Dense(1, activation="softmax")(x)
+
+            model = Model(inputs=inputs, outputs=outputs)
+
+            model.compile(
+                optimizer="adam",
+                loss="categorical_crossentropy",
+                metrics=["accuracy"],
+            )
+
+            # Model Summary
+            model.summary()
         case "Transfer Learning":
             base_model = EfficientNetB0(
                 weights="imagenet",
@@ -151,6 +183,35 @@ def train_advanced_supervised_model(
             model.compile(
                 optimizer=Adam(learning_rate=0.0001),
                 loss="binary_crossentropy",
+                metrics=["accuracy"],
+            )
+
+            # Model Summary
+            model.summary()
+        case "Transfer Learning Multi":
+            base_model = EfficientNetB0(
+                weights="imagenet",
+                include_top=False,
+                input_shape=(image_size, image_size, 3),
+            )
+            # Freeze pre-trained layers to retain learned features
+            base_model.trainable = False
+
+            # Extract deep features
+            x = base_model.output
+            x = GlobalAveragePooling2D()(x)
+            x = Dense(128, activation="relu")(x)
+            x = Dropout(0.3)(x)
+
+            output = Dense(1, activation="softmax")(x)  # Binary classification
+
+            # Define the final model
+            model = Model(inputs=base_model.input, outputs=output)
+
+            # Compile model
+            model.compile(
+                optimizer=Adam(learning_rate=0.0001),
+                loss="categorical_crossentropy",
                 metrics=["accuracy"],
             )
 

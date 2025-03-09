@@ -13,36 +13,28 @@ def dummy_image():
 
 
 def test_get_features_good(dummy_image):
-    original_image, image_with_features = get_features(
-        dummy_image, method="Good"
-    )
+    original_image, image_with_features = get_features(dummy_image, method="Good")
     assert original_image.shape == (100, 100, 3)
     assert image_with_features.shape == (100, 100, 3)
     assert not np.array_equal(original_image, image_with_features)
 
 
 def test_get_features_fast(dummy_image):
-    original_image, image_with_features = get_features(
-        dummy_image, method="Fast"
-    )
+    original_image, image_with_features = get_features(dummy_image, method="Fast")
     assert original_image.shape == (100, 100, 3)
     assert image_with_features.shape == (100, 100, 3)
     assert not np.array_equal(original_image, image_with_features)
 
 
 def test_get_features_orb(dummy_image):
-    original_image, image_with_features = get_features(
-        dummy_image, method="ORB"
-    )
+    original_image, image_with_features = get_features(dummy_image, method="ORB")
     assert original_image.shape == (100, 100, 3)
     assert image_with_features.shape == (100, 100, 3)
     assert not np.array_equal(original_image, image_with_features)
 
 
 def test_get_features_sift(dummy_image):
-    original_image, image_with_features = get_features(
-        dummy_image, method="SIFT"
-    )
+    original_image, image_with_features = get_features(dummy_image, method="SIFT")
     assert original_image.shape == (100, 100, 3)
     assert image_with_features.shape == (100, 100, 3)
     assert not np.array_equal(original_image, image_with_features)

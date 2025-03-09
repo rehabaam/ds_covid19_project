@@ -67,12 +67,8 @@ def get_images_texture(images_dir, margin_percentage=0, distance=0, angle=0):
     data = []
     for filename in os.listdir(images_dir):
         if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
-            image = crop_image(
-                os.path.join(images_dir, filename), margin_percentage
-            )
-            data.append(
-                evaluate_image_texture(filename, image[0], distance, angle)
-            )
+            image = crop_image(os.path.join(images_dir, filename), margin_percentage)
+            data.append(evaluate_image_texture(filename, image[0], distance, angle))
     return pd.DataFrame(
         data,
         columns=[

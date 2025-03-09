@@ -7,7 +7,7 @@ import numpy as np
 from scipy.stats import kurtosis, skew
 from skimage.feature.texture import graycomatrix, graycoprops
 
-from src.preprocessing.image_augmentor import generate_augmented_images
+from src.preprocessing.image_augmentor import generate_augmented_images_binaryclass
 
 
 # Function to extract basic statistical features from an image
@@ -103,7 +103,7 @@ def get_extracted_features(
             images.append(image)
 
     if augmentor and samples > 0:
-        images = generate_augmented_images(images, samples, random_seed)
+        images = generate_augmented_images_binaryclass(images, samples, random_seed)
 
     for image in images:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)

@@ -38,9 +38,7 @@ def draw_image_countours(image_path, display_image=False):
     image = preprocessor.crop_image(image_path, 10)
     blurred_image = cv2.GaussianBlur(image[0], (5, 5), 0)
     edges = cv2.Canny(blurred_image, 50, 150)
-    contours, _ = cv2.findContours(
-        edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-    )
+    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(image, contours, -1, (0, 255, 0), 3)
 
     if display_image:

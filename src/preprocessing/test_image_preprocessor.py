@@ -119,9 +119,7 @@ def test_crop_image(tmpdir):
     assert original_image.shape == (100, 100, 3)
 
     # Test cropping with a different margin_percentage
-    cropped_image, original_image = crop_image(
-        image_path, margin_percentage=20
-    )
+    cropped_image, original_image = crop_image(image_path, margin_percentage=20)
     assert cropped_image.shape == (60, 60, 3)
     assert original_image.shape == (100, 100, 3)
 
@@ -131,8 +129,6 @@ def test_crop_image(tmpdir):
     assert original_image.shape == (100, 100, 3)
 
     # Test cropping with a margin_percentage of 50
-    cropped_image, original_image = crop_image(
-        image_path, margin_percentage=50
-    )
+    cropped_image, original_image = crop_image(image_path, margin_percentage=50)
     assert cropped_image.shape == (0, 0, 3)
     assert original_image.shape == (100, 100, 3)

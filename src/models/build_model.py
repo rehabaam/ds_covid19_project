@@ -15,6 +15,7 @@ from tensorflow.keras import Model
 from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.layers import (
+    BatchNormalization,
     Conv2D,
     Dense,
     Dropout,
@@ -30,9 +31,7 @@ from tensorflow.keras.optimizers import Adam
 from src.common.mlflow_manager import log_model
 
 
-def train_basic_supervised_model(
-    X_train, y_train, model_type="Logistic Regression"
-):
+def train_basic_supervised_model(X_train, y_train, model_type="Logistic Regression"):
     """
     train_basic_supervised_model Trains a model on the data
 
@@ -91,7 +90,14 @@ def train_basic_supervised_model(
 
 
 def train_advanced_supervised_model(
-    X_train, y_train, image_size, epochs, model_type="CNN"
+    X_train,
+    y_train,
+    image_size,
+    epochs,
+    num_classes,
+    class_weight,
+    model_type="CNN",
+    classification_type="binary",
 ):
     """
     train_advanced_supervised_model Trains a model on the data
@@ -99,16 +105,25 @@ def train_advanced_supervised_model(
     Input:
     X_train: np.array: Features
     y_train: np.array: Labels
-    X_test: np.array: Features
-    y_test: np.array: Labels
     image_size: int: Size of the image
     epochs: int: Number of epochs to train
+    num_classes: int: Number of classes
+    class_weight: dict: Class weights for the model
     model_type: str: Type of model to train
+    classification_type: str: Type of the classification
 
     Output:
     model: model: Trained model
     history: history: Training history
     """
+
+    # Set activation and loss based on class mode
+    if classification_type == "binary":
+        activation = "sigmoid"
+        loss = "binary_crossentropy"
+    else:
+        activation = "softmax"
+        loss = "categorical_crossentropy"
 
     match model_type:
         case "CNN":
@@ -116,44 +131,40 @@ def train_advanced_supervised_model(
             x = Resizing(256, 256)(inputs)
             x = Rescaling(1.0 / 255)(x)
 
-            x = Conv2D(32, (5, 5), padding="same", activation="relu")(x)
+            # 🔹 First Convolution Block
+            x = Conv2D(32, (3, 3), activation="relu", padding="same")(x)
+            x = BatchNormalization()(x)  # Normalization improves training stability
             x = MaxPooling2D((2, 2))(x)
-            x = Dropout(0.2)(x)
 
+            # 🔹 Second Convolution Block
+            x = Conv2D(64, (3, 3), activation="relu", padding="same")(x)
+            x = BatchNormalization()(x)
+            x = MaxPooling2D((2, 2))(x)
+
+            # 🔹 Third Convolution Block
+            x = Conv2D(128, (3, 3), activation="relu", padding="same")(x)
+            x = BatchNormalization()(x)
+            x = MaxPooling2D((2, 2))(x)
+
+            # 🔹 Fourth Convolution Block (Extra Layers for Deeper Model)
+            x = Conv2D(256, (3, 3), activation="relu", padding="same")(x)
+            x = BatchNormalization()(x)
+            x = MaxPooling2D((2, 2))(x)
+
+            # 🔹 Flatten & Fully Connected Layers
             x = Flatten()(x)
-            x = Dense(128, activation="relu")(x)
+            x = Dense(512, activation="relu")(x)
+            x = Dropout(0.5)(x)  # Dropout to prevent overfitting
+            x = Dense(256, activation="relu")(x)
+            x = Dropout(0.5)(x)
 
-            outputs = Dense(1, activation="sigmoid")(x)
+            outputs = Dense(num_classes, activation=activation)(x)
 
             model = Model(inputs=inputs, outputs=outputs)
 
             model.compile(
-                optimizer="adam",
-                loss="binary_crossentropy",
-                metrics=["accuracy"],
-            )
-
-            # Model Summary
-            model.summary()
-        case "CNN_Multi":
-            inputs = Input(shape=(image_size, image_size, 1))
-            x = Resizing(256, 256)(inputs)
-            x = Rescaling(1.0 / 255)(x)
-
-            x = Conv2D(32, (5, 5), padding="same", activation="relu")(x)
-            x = MaxPooling2D((2, 2))(x)
-            x = Dropout(0.2)(x)
-
-            x = Flatten()(x)
-            x = Dense(128, activation="relu")(x)
-
-            outputs = Dense(1, activation="softmax")(x)
-
-            model = Model(inputs=inputs, outputs=outputs)
-
-            model.compile(
-                optimizer="adam",
-                loss="categorical_crossentropy",
+                optimizer=Adam(learning_rate=0.0001),
+                loss=loss,
                 metrics=["accuracy"],
             )
 
@@ -174,7 +185,7 @@ def train_advanced_supervised_model(
             x = Dense(128, activation="relu")(x)
             x = Dropout(0.3)(x)
 
-            output = Dense(1, activation="sigmoid")(x)  # Binary classification
+            output = Dense(num_classes, activation=activation)(x)  # Binary classification
 
             # Define the final model
             model = Model(inputs=base_model.input, outputs=output)
@@ -182,36 +193,7 @@ def train_advanced_supervised_model(
             # Compile model
             model.compile(
                 optimizer=Adam(learning_rate=0.0001),
-                loss="binary_crossentropy",
-                metrics=["accuracy"],
-            )
-
-            # Model Summary
-            model.summary()
-        case "Transfer Learning Multi":
-            base_model = EfficientNetB0(
-                weights="imagenet",
-                include_top=False,
-                input_shape=(image_size, image_size, 3),
-            )
-            # Freeze pre-trained layers to retain learned features
-            base_model.trainable = False
-
-            # Extract deep features
-            x = base_model.output
-            x = GlobalAveragePooling2D()(x)
-            x = Dense(128, activation="relu")(x)
-            x = Dropout(0.3)(x)
-
-            output = Dense(1, activation="softmax")(x)  # Binary classification
-
-            # Define the final model
-            model = Model(inputs=base_model.input, outputs=output)
-
-            # Compile model
-            model.compile(
-                optimizer=Adam(learning_rate=0.0001),
-                loss="categorical_crossentropy",
+                loss=loss,
                 metrics=["accuracy"],
             )
 
@@ -223,21 +205,24 @@ def train_advanced_supervised_model(
     reduce_lr = ReduceLROnPlateau(
         monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5, verbose=1
     )
-    early_stop = EarlyStopping(
-        monitor="val_loss", patience=5, restore_best_weights=True, verbose=1
-    )
+    early_stop = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True, verbose=1)
     return model, model.fit(
         X_train,
-        y_train,
-        validation_split=0.2,
+        validation_data=y_train,
         epochs=epochs,
         batch_size=32,
+        class_weight=class_weight,
         callbacks=[reduce_lr, early_stop],
     )
 
 
 def evaluate_model(
-    description, model, X_test, y_test, model_type="Logistic Regression"
+    description,
+    model,
+    X_test,
+    y_test,
+    model_type="Logistic Regression",
+    classification_type="binary",
 ):
     """
     evaluate_model Evaluates a model on the data
@@ -248,6 +233,7 @@ def evaluate_model(
     X_test: np.array: Features
     y_test: np.array: Labels
     model_type: str: Type of model to train
+    classification_type: str: Type of the classification
 
     Output:
     accuracy: float: Accuracy of the model
@@ -266,20 +252,23 @@ def evaluate_model(
         case "CatBoost":
             y_pred = model.predict(X_test)
         case "CNN" | "Transfer Learning":
-            loss, accuracy = model.evaluate(X_test, y_test)
+            loss, accuracy = model.evaluate(X_test)
             metrics = {
                 "loss": loss,
                 "accuracy": accuracy,
             }
 
+            # Fetting validation data
+            images, _ = next(X_test)
             log_model(
                 "Advanced Supervised Models",
                 "tensorflow",
                 description,
                 model,
                 model_type,
-                X_test,
+                images,
                 metrics,
+                classification_type,
             )
             return loss, accuracy
         case _:
@@ -304,6 +293,7 @@ def evaluate_model(
         model_type,
         X_test,
         metrics,
+        classification_type,
     )
 
     return accuracy, classification_report(y_test, y_pred)

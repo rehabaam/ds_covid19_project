@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
-import datetime
-
 import mlflow
 import regex as re
 from mlflow.models import infer_signature
 
 
 def log_model(
-    expermint, framework, description, model, model_name, test_data, metrics
+    expermint,
+    framework,
+    description,
+    model,
+    model_name,
+    test_data,
+    metrics,
+    classification_type,
 ):
     """
     Log a model to MLflow
@@ -20,16 +25,14 @@ def log_model(
     model_name: The name of the model
     test_data: The test data to infer the signature
     metrics: The metrics to log
+    classification_type: The type of classification
 
     output:
     model_info: The model info
     """
 
     # Create a unique run name
-    run_name = f"{model_name}-{datetime.datetime.now()}"
-
-    # Get the current time
-    t = datetime.datetime.now()
+    run_name = f"{model_name}-{classification_type}"
 
     # Set our tracking server uri for logging
     mlflow.set_tracking_uri(uri="http://localhost:8080")
@@ -52,10 +55,8 @@ def log_model(
         # Set a tag that we can use to remind ourselves what this run was for
         run_tags = {
             "mlflow.note.content": f"{description} using {framework}-{model_name}",
-            "Classification type": "Binary",
-            "Classification dataset": re.search(
-                r"\[(.*?)\]", description
-            ).group(),
+            "Classification type": f"{classification_type}",
+            "Classification dataset": re.search(r"\[(.*?)\]", description).group(),
         }
 
         mlflow.set_tags(run_tags)
@@ -73,7 +74,7 @@ def log_model(
                     model=model,
                     artifact_path=model_name,
                     signature=signature,
-                    registered_model_name=f"{framework}-{model_name}-{t.date()}",
+                    registered_model_name=f"{framework}-{model_name}-{classification_type}",
                 )
             case "sklearn":
                 # Log the model
@@ -81,7 +82,7 @@ def log_model(
                     sk_model=model,
                     artifact_path=model_name,
                     signature=signature,
-                    registered_model_name=f"{framework}-{model_name}-{t.date()}",
+                    registered_model_name=f"{framework}-{model_name}-{classification_type}",
                 )
             case "keras":
                 # Log the model
@@ -89,7 +90,7 @@ def log_model(
                     keras_model=model,
                     artifact_path=model_name,
                     signature=signature,
-                    registered_model_name=f"{framework}-{model_name}-{t.date()}",
+                    registered_model_name=f"{framework}-{model_name}-{classification_type}",
                 )
             case _:
                 raise TypeError("Framework not supported")

@@ -54,18 +54,14 @@ def get_all_images_features(images_dir, masks_dir=None, method="ORB"):
     for filename in os.listdir(images_dir):
         if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
             image = (
-                cv2.imread(
-                    os.path.join(images_dir, filename), cv2.COLOR_BGR2GRAY
-                )
+                cv2.imread(os.path.join(images_dir, filename), cv2.COLOR_BGR2GRAY)
                 if masks_dir is None
                 else apply_image_mask(
                     os.path.join(images_dir, filename),
                     os.path.join(masks_dir, filename),
                 )
             )
-            keyPoints, descriptors = detector_method.detectAndCompute(
-                image, None
-            )
+            keyPoints, descriptors = detector_method.detectAndCompute(image, None)
             data.append([filename[:-4], len(keyPoints)])
     return (
         keyPoints,
@@ -125,9 +121,7 @@ def get_edges(original_image, method="Canny"):
         case "Gaussian":
             blur = cv2.GaussianBlur(gray_image, (0, 0), sigmaX=33, sigmaY=33)
             image = cv2.divide(gray_image, blur, scale=255)
-            thresh = cv2.threshold(
-                image, 5, 100, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-            )[1]
+            thresh = cv2.threshold(image, 5, 100, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
             kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
             image_edges = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
         case "":
@@ -171,15 +165,11 @@ def get_features(original_image, method="Good"):
         case "ORB" | "SIFT":
             detector_method = get_detector(method)
             keyPoints, _ = detector_method.detectAndCompute(image, None)
-            image = cv2.drawKeypoints(
-                image, keyPoints, None, color=(0, 255, 0), flags=0
-            )
+            image = cv2.drawKeypoints(image, keyPoints, None, color=(0, 255, 0), flags=0)
         case "Blob":
             detector_method = get_detector(method)
             keyPoints = detector_method.detect(image)
-            image = cv2.drawKeypoints(
-                image, keyPoints, None, color=(0, 255, 0), flags=0
-            )
+            image = cv2.drawKeypoints(image, keyPoints, None, color=(0, 255, 0), flags=0)
         case "":
             raise TypeError("Empty method")
         case _:
@@ -188,9 +178,7 @@ def get_features(original_image, method="Good"):
     return original_image, image
 
 
-def add_outline(
-    image, kernel_size=(5, 5), dilations=3, canny_low=30, canny_high=150
-):
+def add_outline(image, kernel_size=(5, 5), dilations=3, canny_low=30, canny_high=150):
     """
     add_outline function returns the image with an outline.
 

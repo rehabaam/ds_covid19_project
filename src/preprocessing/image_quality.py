@@ -182,9 +182,7 @@ def get_images_quality(images_dir, margin_percentage=0):
     data = []
     for filename in os.listdir(images_dir):
         if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
-            image = crop_image(
-                os.path.join(images_dir, filename), margin_percentage
-            )
+            image = crop_image(os.path.join(images_dir, filename), margin_percentage)
             data.append(evaluate_image_quality(filename, image[0]))
     return pd.DataFrame(
         data,
@@ -206,9 +204,7 @@ def calculate_snr(filename, image):
 
     signal_power = np.mean(image**2)
     # Here, we use the skimage method to estimate noise assuming Gaussian noise
-    sigma = estimate_sigma(
-        image, channel_axis=None
-    )  # Noise standard deviation
+    sigma = estimate_sigma(image, channel_axis=None)  # Noise standard deviation
     noise_power = sigma**2
 
     snr = 10 * np.log10(signal_power / noise_power)
@@ -232,9 +228,7 @@ def get_images_snr(images_dir, margin_percentage=0):
     data = []
     for filename in os.listdir(images_dir):
         if filename.endswith((".png", ".jpg", ".jpeg", ".bmp", ".tiff")):
-            image = crop_image(
-                os.path.join(images_dir, filename), margin_percentage
-            )
+            image = crop_image(os.path.join(images_dir, filename), margin_percentage)
             data.append(calculate_snr(filename, image[0]))
     return pd.DataFrame(
         data,

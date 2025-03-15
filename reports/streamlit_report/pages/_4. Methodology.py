@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 import streamlit as st
 
 report_data_path = "reports/streamlit_report/data"
 
-st.set_page_config(page_title="Methodology", page_icon="🦠")
+st.set_page_config(page_title="Covid-19 🦠 Detection", page_icon="🦠")
+
 st.title("Methodology")
 st.subheader("Dataset exploration")
 st.markdown(
@@ -83,4 +86,6 @@ Upon calculating the summary statistics for the X-ray images in the dataset, we 
 )
 class_distribution = pd.read_csv(f"{report_data_path}/class_distribution.csv", index_col=0)
 st.dataframe(class_distribution)
-st.plotly_chart(class_distribution)
+fig = plt.figure()
+sns.barplot(x="Class", y="Image count", hue="%", data=class_distribution)
+st.pyplot(fig)

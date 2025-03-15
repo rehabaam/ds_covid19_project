@@ -10,6 +10,7 @@
 # Ignore pre-trained models
 **/*.pth
 **/*.hdf5
+**/*.onnx
 
 # Ignore MLflow folder and files
 mlruns

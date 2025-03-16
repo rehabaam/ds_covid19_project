@@ -65,13 +65,6 @@ def generate_augmented_images_multiclass(path, image_size, batch_size) -> tuple:
     """
     # Define an ImageDataGenerator for augmentation
     datagen = ImageDataGenerator(
-        rotation_range=15,  # Rotate images by up to 15 degrees
-        width_shift_range=0.1,  # Shift width by 10%
-        height_shift_range=0.1,  # Shift height by 10%
-        shear_range=0.1,  # Apply shearing
-        zoom_range=0.1,  # Zoom in/out
-        horizontal_flip=True,  # Flip images horizontally
-        fill_mode="nearest",  # Fill missing pixels
         dtype="uint8",  # Data type
         validation_split=0.2,
     )
@@ -83,6 +76,7 @@ def generate_augmented_images_multiclass(path, image_size, batch_size) -> tuple:
         class_mode="categorical",
         color_mode="grayscale",
         subset="training",
+        seed=42,
     )
 
     val_generator = datagen.flow_from_directory(
@@ -92,6 +86,7 @@ def generate_augmented_images_multiclass(path, image_size, batch_size) -> tuple:
         class_mode="categorical",
         color_mode="grayscale",
         subset="validation",
+        seed=42,
     )
 
     class_labels = train_generator.classes

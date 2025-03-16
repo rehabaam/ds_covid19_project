@@ -154,9 +154,9 @@ def train_advanced_supervised_model(
             # 🔹 Flatten & Fully Connected Layers
             x = Flatten()(x)
             x = Dense(512, activation="relu")(x)
-            x = Dropout(0.5)(x)  # Dropout to prevent overfitting
+            x = Dropout(0.2)(x)  # Dropout to prevent overfitting
             x = Dense(256, activation="relu")(x)
-            x = Dropout(0.5)(x)
+            x = Dropout(0.2)(x)
 
             outputs = Dense(num_classes, activation=activation)(x)
 

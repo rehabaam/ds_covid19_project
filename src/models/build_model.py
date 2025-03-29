@@ -151,11 +151,24 @@ def train_advanced_supervised_model(
             x = BatchNormalization()(x)
             x = MaxPooling2D((2, 2))(x)
 
+            # 🔹 Fifth Convolution Block (Extra Layers for Deeper Model)
+            x = Conv2D(512, (3, 3), activation="relu", padding="same")(x)
+            x = BatchNormalization()(x)
+            x = MaxPooling2D((2, 2))(x)
+
             # 🔹 Flatten & Fully Connected Layers
             x = Flatten()(x)
             x = Dense(512, activation="relu")(x)
-            x = Dropout(0.2)(x)  # Dropout to prevent overfitting
+            x = Dropout(0.2)(x)
             x = Dense(256, activation="relu")(x)
+            x = Dropout(0.2)(x)
+            x = Dense(128, activation="relu")(x)
+            x = Dropout(0.2)(x)
+            x = Dense(64, activation="relu")(x)
+            x = Dropout(0.2)(x)
+            x = Dense(32, activation="relu")(x)
+            x = Dropout(0.2)(x)
+            x = Dense(16, activation="relu")(x)
             x = Dropout(0.2)(x)
 
             outputs = Dense(num_classes, activation=activation)(x)

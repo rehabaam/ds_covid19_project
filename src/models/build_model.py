@@ -11,6 +11,7 @@ from sklearn.metrics import (
     r2_score,
 )
 from sklearn.svm import SVC
+from sklearn.utils.class_weight import compute_class_weight
 from tensorflow.keras import Model
 from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
@@ -44,21 +45,28 @@ def train_basic_supervised_model(X_train, y_train, model_type="Logistic Regressi
     model: model: Trained model
     """
 
+    class_weights = compute_class_weight("balanced", classes=np.unique(y_train), y=y_train)
+    class_weight_dict = dict(zip(np.unique(y_train), class_weights))
+
+    print(f"Computed Class Weights:{class_weight_dict} labels: {np.unique(y_train)}")
+
     match model_type:
         case "Logistic Regression":
             model = LogisticRegression(
                 C=0.1,
-                class_weight=None,
+                class_weight=class_weight_dict,
                 max_iter=100,
                 penalty="l1",
                 solver="liblinear",
             )
         case "Linear Regression":
+            sample_weights = np.array([class_weight_dict[label] for label in y_train])
             model = LinearRegression()
+            return model.fit(X_train, y_train, sample_weight=sample_weights)
         case "SVM Linear":
-            model = SVC(kernel="linear", probability=True)
+            model = SVC(kernel="linear", class_weight=class_weight_dict, probability=True)
         case "SVM RBF":
-            model = SVC(kernel="rbf")
+            model = SVC(kernel="rbf", class_weight=class_weight_dict)
         case "Random Forest":
             model = RandomForestClassifier(
                 n_estimators=500,
@@ -66,13 +74,14 @@ def train_basic_supervised_model(X_train, y_train, model_type="Logistic Regressi
                 min_samples_split=2,
                 min_samples_leaf=1,
                 max_features="sqrt",
-                class_weight=None,
+                class_weight=class_weight_dict,
             )
         case "CatBoost":
             model = CatBoostClassifier(
                 iterations=500,
                 depth=6,
                 learning_rate=0.05,
+                class_weights=class_weight_dict,
                 loss_function="Logloss",
                 verbose=100,
             )
@@ -81,6 +90,7 @@ def train_basic_supervised_model(X_train, y_train, model_type="Logistic Regressi
                 iterations=500,
                 depth=6,
                 learning_rate=0.05,
+                class_weights=class_weight_dict,
                 loss_function="MultiClass",
                 verbose=100,
             )

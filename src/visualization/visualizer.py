@@ -163,7 +163,7 @@ def show_grad_cam_cnn(images, model, class_names):
             grad_cam_image, predicted_class = grad_cam(images[i], model, layer)
 
             # Display the image with Grad-CAM
-            plt.title(f"Grad-CAM {layer} {class_names[predicted_class]}")
+            plt.title(f"{layer} {class_names[predicted_class]}")
             plt.imshow(grad_cam_image)
             plt.axis("off")
 

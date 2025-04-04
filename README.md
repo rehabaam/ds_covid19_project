@@ -73,3 +73,8 @@ To stop MLFlow, execute this command manually as the following:
 ```bash
 make mlflow-stop
 ```
+### Run Streamlit
+To run Streamlit, execute this command manually as the following:
+```bash
+streamlit run reports/streamlit_report/Home.py
+```

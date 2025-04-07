@@ -1,0 +1,81 @@
+# -*- coding: utf-8 -*-
+import os
+
+import cv2
+import numpy as np
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
+from tqdm import tqdm
+
+
+# Prediction and saving function
+def predict_and_save(image_path, output_path, model, target_size, apply_mask=False):
+    """
+    Predict the mask for a given image and save it.
+    Parameters:
+    - image_path: str, path to the input image.
+    - output_path: str, path to save the output mask.
+    - model: Keras model, pre-trained model for mask prediction.
+    - target_size: tuple, target size for the images (height, width).
+    - apply_mask: bool, whether to apply the mask to the original image.
+    """
+    img = load_img(image_path, color_mode="grayscale", target_size=target_size)
+    img_array = img_to_array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)  # (1, h, w, 1)
+    prediction = model.predict(img_array)
+    mask = (prediction[0, :, :, 0] > 0.5).astype(np.uint8) * 255  # Convert to 0-255
+
+    if apply_mask:
+        # Load original image
+        image = 255 - np.asarray(img).copy()  # Invert image for mask application
+        mask = cv2.subtract(mask, image)
+
+    # Save mask as PNG
+    cv2.imwrite(output_path, mask)
+
+
+def generate_masks(input_folder, output_folder, model, target_size):
+    """
+    Generate masks for chest X-ray images using a pre-trained model.
+
+    Parameters:
+    - input_folder: str, path to the folder containing input images.
+    - output_folder: str, path to the folder where masks will be saved.
+    - model_path: str, path to the pre-trained model file.
+    - target_size: tuple, target size for the images (height, width).
+    """
+
+    # Create output directory if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Process all images in the folder
+    for filename in tqdm(os.listdir(input_folder)):
+        if filename.lower().endswith((".png", ".jpg", ".jpeg")):
+            input_path = os.path.join(input_folder, filename)
+            output_path = os.path.join(output_folder, os.path.splitext(filename)[0] + ".png")
+            predict_and_save(input_path, output_path, model, target_size)
+
+    print("All masks have been predicted and saved to:", output_folder)
+
+
+def generate_masked_images(input_folder, output_folder, model, target_size):
+    """
+    Generate masked images for chest X-ray images using a pre-trained model.
+
+    Parameters:
+    - input_folder: str, path to the folder containing input images.
+    - output_folder: str, path to the folder where masks will be saved.
+    - model_path: str, path to the pre-trained model file.
+    - target_size: tuple, target size for the images (height, width).
+    """
+
+    # Create output directory if it doesn't exist
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Process all images in the folder
+    for filename in tqdm(os.listdir(input_folder)):
+        if filename.lower().endswith((".png", ".jpg", ".jpeg")):
+            input_path = os.path.join(input_folder, filename)
+            output_path = os.path.join(output_folder, os.path.splitext(filename)[0] + ".png")
+            predict_and_save(input_path, output_path, model, target_size, apply_mask=True)
+
+    print("All masks have been predicted and saved to:", output_folder)

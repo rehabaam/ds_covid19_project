@@ -11,6 +11,7 @@
 **/*.pth
 **/*.hdf5
 **/*.onnx
+**/*.h5
 
 # Ignore MLflow folder and files
 mlruns

@@ -69,7 +69,7 @@ def create_class_folders(path, categories, classes):
                 print(f"An error occurred: {e}")
 
 
-def move_files_to_class_folders(old_path, new_path, categories, classes):
+def move_files_to_class_folders(old_path, new_path, categories, classes, binary=False):
     """
     Move files to class folders for
     each category.
@@ -83,8 +83,13 @@ def move_files_to_class_folders(old_path, new_path, categories, classes):
     for category in categories:
         for cls in classes:
             source = os.path.join(old_path, cls, category)
-            target = os.path.join(new_path, category, cls)
+            target = (
+                os.path.join(new_path, category, "Sick")
+                if binary
+                else os.path.join(new_path, category, cls)
+            )
             try:
+                print(f"Moving files from '{source}' to '{target}'...")
                 shutil.copytree(source, target, dirs_exist_ok=True)
                 print("Files copied successfully.")
             except FileExistsError:

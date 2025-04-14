@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.metrics import classification_report, confusion_matrix
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.models import Model
 
@@ -254,3 +255,16 @@ def show_loss_accuracy_report(history):
 
     plt.tight_layout()
     plt.show()
+
+
+def show_confusion_matrix_report(model, val_data):
+    """
+    show_confusion_matrix_report function takes a confusion matrix as input
+    and displays the confusion matrix.
+    Input:
+    model: tf.keras.Model: Trained Keras model
+    val_data: tf.data.Dataset: Validation data
+    """
+    y_pred = model.predict(val_data).argmax(axis=1)
+    print(confusion_matrix(val_data.labels, y_pred))
+    print(classification_report(val_data.labels, y_pred))

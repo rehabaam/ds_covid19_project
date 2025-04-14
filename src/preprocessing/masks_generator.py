@@ -20,6 +20,7 @@ def predict_and_save(image_path, output_path, model, target_size, apply_mask=Fal
     """
     img = load_img(image_path, color_mode="grayscale", target_size=target_size)
     img_array = img_to_array(img) / 255.0
+    img_array = increase_brightness(img_array)
     img_array = np.expand_dims(img_array, axis=0)  # (1, h, w, 1)
     prediction = model.predict(img_array)
     mask = (prediction[0, :, :, 0] > 0.5).astype(np.uint8) * 255  # Convert to 0-255
@@ -79,3 +80,10 @@ def generate_masked_images(input_folder, output_folder, model, target_size):
             predict_and_save(input_path, output_path, model, target_size, apply_mask=True)
 
     print("All masks have been predicted and saved to:", output_folder)
+
+
+def increase_brightness(img_array, factor=1.5):
+    # Multiply and clip to valid range
+    bright = img_array * factor
+    bright = np.clip(bright, 0, 255)
+    return bright

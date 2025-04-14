@@ -6,9 +6,12 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
+    f1_score,
     mean_absolute_error,
     mean_squared_error,
+    precision_score,
     r2_score,
+    recall_score,
 )
 from sklearn.svm import SVC
 from sklearn.utils.class_weight import compute_class_weight
@@ -137,49 +140,30 @@ def train_advanced_supervised_model(
 
     match model_type:
         case "CNN":
+            # 🔹 Input layer Block
             inputs = Input(shape=(image_size, image_size, 1))
             x = Resizing(256, 256)(inputs)
             x = Rescaling(1.0 / 255)(x)
 
-            # 🔹 First Convolution Block
-            x = Conv2D(32, (3, 3), activation="relu", padding="same")(x)
-            x = BatchNormalization()(x)  # Normalization improves training stability
-            x = MaxPooling2D((2, 2))(x)
+            # Define a block: Conv -> BN -> ReLU
+            def conv_block(x, filters, kernel_size=3):
+                x = Conv2D(filters, kernel_size, activation="relu", padding="same")(x)
+                x = BatchNormalization()(x)
+                return x
 
-            # 🔹 Second Convolution Block
-            x = Conv2D(64, (3, 3), activation="relu", padding="same")(x)
-            x = BatchNormalization()(x)
-            x = MaxPooling2D((2, 2))(x)
+            # 🔹 Convolutional Block (4 layers + max pooling in the 4th layer)
+            filter_list = [32, 64, 128, 256, 512]
+            for filters in filter_list:
+                for _ in range(4):
+                    x = conv_block(x, filters)
+                x = MaxPooling2D(pool_size=(2, 2))(x)
 
-            # 🔹 Third Convolution Block
-            x = Conv2D(128, (3, 3), activation="relu", padding="same")(x)
-            x = BatchNormalization()(x)
-            x = MaxPooling2D((2, 2))(x)
-
-            # 🔹 Fourth Convolution Block (Extra Layers for Deeper Model)
-            x = Conv2D(256, (3, 3), activation="relu", padding="same")(x)
-            x = BatchNormalization()(x)
-            x = MaxPooling2D((2, 2))(x)
-
-            # 🔹 Fifth Convolution Block (Extra Layers for Deeper Model)
-            x = Conv2D(512, (3, 3), activation="relu", padding="same")(x)
-            x = BatchNormalization()(x)
-            x = MaxPooling2D((2, 2))(x)
-
-            # 🔹 Flatten & Fully Connected Layers
             x = Flatten()(x)
-            x = Dense(512, activation="relu")(x)
-            x = Dropout(0.2)(x)
-            x = Dense(256, activation="relu")(x)
-            x = Dropout(0.2)(x)
-            x = Dense(128, activation="relu")(x)
-            x = Dropout(0.2)(x)
-            x = Dense(64, activation="relu")(x)
-            x = Dropout(0.2)(x)
-            x = Dense(32, activation="relu")(x)
-            x = Dropout(0.2)(x)
-            x = Dense(16, activation="relu")(x)
-            x = Dropout(0.2)(x)
+            # 🔹 Fully Connected Block (4 layers)
+            dense_list = [256, 128, 64, 32]
+            for dense in dense_list:
+                x = Dense(dense, activation="relu")(x)
+                x = Dropout(0.2)(x)
 
             outputs = Dense(num_classes, activation=activation)(x)
 
@@ -226,7 +210,7 @@ def train_advanced_supervised_model(
             raise ValueError("Invalid model type")
 
     reduce_lr = ReduceLROnPlateau(
-        monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5, verbose=1
+        monitor="val_loss", factor=0.2, patience=5, min_lr=1e-5, verbose=1
     )
     early_stop = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True, verbose=1)
     return model, model.fit(
@@ -246,6 +230,7 @@ def evaluate_model(
     y_test,
     model_type="Logistic Regression",
     classification_type="binary",
+    history=None,
 ):
     """
     evaluate_model Evaluates a model on the data
@@ -276,11 +261,17 @@ def evaluate_model(
             y_pred = model.predict(X_test)
         case "CNN" | "Transfer Learning":
             loss, accuracy = model.evaluate(X_test)
+            y_pred = model.predict(X_test)
+            y_pred = np.argmax(y_pred, axis=1)
+            f1 = f1_score(X_test.labels, y_pred, average="weighted")
+
             metrics = {
                 "loss": loss,
                 "accuracy": accuracy,
+                "f1_score": f1,
+                "precision": precision_score(X_test.labels, y_pred, average="weighted"),
+                "recall": recall_score(X_test.labels, y_pred, average="weighted"),
             }
-
             # Fetting validation data
             images, _ = next(X_test)
             log_model(
@@ -292,6 +283,7 @@ def evaluate_model(
                 images,
                 metrics,
                 classification_type,
+                history,
             )
             return loss, accuracy
         case _:
@@ -306,6 +298,9 @@ def evaluate_model(
         "rmse": np.sqrt(mse),
         "r2": r2_score(y_test, y_pred),
         "accuracy": accuracy,
+        "f1_score": f1_score(y_test, y_pred, average="weighted"),
+        "precision": precision_score(y_test, y_pred, average="weighted"),
+        "recall": recall_score(y_test, y_pred, average="weighted"),
     }
 
     log_model(
@@ -317,6 +312,7 @@ def evaluate_model(
         X_test,
         metrics,
         classification_type,
+        history=None,
     )
 
     return accuracy, classification_report(y_test, y_pred)

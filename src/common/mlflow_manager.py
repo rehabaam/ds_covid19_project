@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+import io
+import json
+import os
+
 import mlflow
 import regex as re
 from mlflow.models import infer_signature
@@ -13,6 +17,7 @@ def log_model(
     test_data,
     metrics,
     classification_type,
+    history=None,
 ):
     """
     Log a model to MLflow
@@ -61,14 +66,30 @@ def log_model(
 
         mlflow.set_tags(run_tags)
 
-        # Infer the signature
-        signature = infer_signature(test_data, model.predict(test_data))
-
         # Log the loss metric
         mlflow.log_metrics(metrics)
 
+        signature = infer_signature(test_data, model.predict(test_data))
+
         match framework:
             case "tensorflow":
+                stream = io.StringIO()
+                model.summary(print_fn=lambda x: stream.write(x + "\n"))
+                summary_str = stream.getvalue()
+
+                with open("model_summary.txt", "w") as f:
+                    f.write(summary_str)
+
+                mlflow.log_artifact("model_summary.txt")
+                os.remove("model_summary.txt")
+
+                if history:
+                    with open("training_history.json", "w") as f:
+                        json.dump(history.history, f)
+
+                    mlflow.log_artifact("training_history.json")
+                    os.remove("training_history.json")
+
                 # Log the model
                 model_info = mlflow.tensorflow.log_model(
                     model=model,
@@ -77,6 +98,7 @@ def log_model(
                     registered_model_name=f"{framework}-{model_name}-{classification_type}",
                 )
             case "sklearn":
+
                 # Log the model
                 model_info = mlflow.sklearn.log_model(
                     sk_model=model,

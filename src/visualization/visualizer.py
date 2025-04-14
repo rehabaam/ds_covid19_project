@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+import os
+
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.models import Model
@@ -136,7 +139,9 @@ def grad_cam(image, model, layer_name) -> tuple:
     return np.clip(superimposed_image, 0, 1), predicted_class
 
 
-def show_grad_cam_cnn(images, model, class_names):
+def show_grad_cam_cnn(
+    images, model, class_names, labels, save_dir="", image_name="", save_image=False
+):
     """
     show_grad_cam_cnn function takes a list of images, a model, and class names as input
     and displays the Grad-CAM heatmaps for each image.
@@ -145,12 +150,12 @@ def show_grad_cam_cnn(images, model, class_names):
     images: list: List of images
     model: tf.keras.Model: Trained Keras model
     class_names: list: List of class names
-
+    labels: list: List of labels
     """
     number_of_images = images.shape[0]
     conv_layers = [layer.name for layer in model.layers if isinstance(layer, Conv2D)]
 
-    plt.figure(figsize=(16, 16))
+    plt.figure(figsize=(30, 6 * len(conv_layers)))
 
     for j, layer in enumerate(conv_layers):
 
@@ -163,8 +168,89 @@ def show_grad_cam_cnn(images, model, class_names):
             grad_cam_image, predicted_class = grad_cam(images[i], model, layer)
 
             # Display the image with Grad-CAM
-            plt.title(f"{layer} {class_names[predicted_class]}")
+            plt.title(
+                f"Layer: {layer}\nprediction: {class_names[predicted_class]}\nactual: {class_names[np.where(labels[i] == 1)[0][0]]}",
+                fontsize=12,
+            )
             plt.imshow(grad_cam_image)
             plt.axis("off")
 
+    # Define folder and filename
+    if save_image:
+        os.makedirs(save_dir, exist_ok=True)  # Create folder if it doesn't exist
+        file_path = os.path.join(save_dir, f"{image_name}.png")
+        plt.savefig(file_path, bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
+
+
+def get_predication_output(images, model, class_names, labels):
+    """
+    get_predication_output function takes a model and an image as input
+    and returns the predicted class probabilities.
+
+    Input:
+    images: np.array: Image as a numpy array
+    model: tf.keras.Model: Trained Keras model
+    class_names: list: List of class names
+    labels: np.array: Labels for the images
+
+    Output:
+    predictions: np.array: Predicted class probabilities
+    """
+
+    number_of_images = images.shape[0]
+
+    df = pd.DataFrame(columns=["image", "confidence", "predicted_class", "actual_class"])
+
+    for i in range(number_of_images):
+
+        # Predict the class probabilities
+        predictions = model.predict(np.expand_dims(images[i], axis=0))
+
+        # Get the predicted class (index of maximum probability)
+        predicted_class = np.argmax(predictions)  # Get the index of the predicted class
+
+        # Get the confidence (probability) for the predicted class
+        confidence = predictions[0][predicted_class]  # Confidence score for the predicted class
+        confidence_percentage = confidence * 100  # Convert to percentage
+
+        # Add the Grad-CAM image and label to the DataFrame
+        df.loc[len(df)] = {
+            "image": i,
+            "confidence": confidence_percentage,
+            "predicted_class": class_names[predicted_class],
+            "actual_class": class_names[np.where(labels[i] == 1)[0][0]],
+        }
+
+    return df
+
+
+def show_loss_accuracy_report(history):
+    """
+    show_accuracy_loss_report function takes a history object as input
+    and displays the loss and accuracy over epochs.
+    Input:
+    history: tf.keras.callbacks.History: History object containing training history
+    """
+    _, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+    # Accuracy plot
+    ax1.plot(history.history["accuracy"], label="Train Accuracy")
+    ax1.plot(history.history["val_accuracy"], label="Val Accuracy")
+    ax1.set_title("Model Accuracy")
+    ax1.set_xlabel("Epoch")
+    ax1.set_ylabel("Accuracy")
+    ax1.legend()
+
+    # Loss plot
+    ax2.plot(history.history["loss"], label="Train Loss")
+    ax2.plot(history.history["val_loss"], label="Val Loss")
+    ax2.set_title("Model Loss")
+    ax2.set_xlabel("Epoch")
+    ax2.set_ylabel("Loss")
+    ax2.legend()
+
+    plt.tight_layout()
     plt.show()

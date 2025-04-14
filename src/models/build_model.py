@@ -109,6 +109,7 @@ def train_advanced_supervised_model(
     epochs,
     num_classes,
     class_weight,
+    n_channels=1,
     model_type="CNN",
     classification_type="binary",
 ):
@@ -141,7 +142,7 @@ def train_advanced_supervised_model(
     match model_type:
         case "CNN":
             # 🔹 Input layer Block
-            inputs = Input(shape=(image_size, image_size, 1))
+            inputs = Input(shape=(image_size, image_size, n_channels))
             x = Resizing(256, 256)(inputs)
             x = Rescaling(1.0 / 255)(x)
 
@@ -228,6 +229,7 @@ def evaluate_model(
     model,
     X_test,
     y_test,
+    n_channels=1,
     model_type="Logistic Regression",
     classification_type="binary",
     history=None,
@@ -263,17 +265,38 @@ def evaluate_model(
             loss, accuracy = model.evaluate(X_test)
             y_pred = model.predict(X_test)
             y_pred = np.argmax(y_pred, axis=1)
-            f1 = f1_score(X_test.labels, y_pred, average="weighted")
+
+            f1 = (
+                f1_score(X_test.labels, y_pred, average="weighted")
+                if n_channels == 1
+                else f1_score(X_test.get_class_labels(), y_pred, average="weighted")
+            )
+            precision = (
+                precision_score(X_test.labels, y_pred, average="weighted")
+                if n_channels == 1
+                else precision_score(X_test.get_class_labels(), y_pred, average="weighted")
+            )
+            recall = (
+                recall_score(X_test.labels, y_pred, average="weighted")
+                if n_channels == 1
+                else recall_score(X_test.get_class_labels(), y_pred, average="weighted")
+            )
 
             metrics = {
                 "loss": loss,
                 "accuracy": accuracy,
                 "f1_score": f1,
-                "precision": precision_score(X_test.labels, y_pred, average="weighted"),
-                "recall": recall_score(X_test.labels, y_pred, average="weighted"),
+                "precision": precision,
+                "recall": recall,
             }
             # Fetting validation data
-            images, _ = next(X_test)
+            if n_channels == 1:
+                images, _ = next(X_test)
+            else:
+                for x, _ in X_test:
+                    images = x
+                    break
+
             log_model(
                 "Advanced Supervised Models",
                 "tensorflow",

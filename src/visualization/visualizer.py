@@ -257,7 +257,7 @@ def show_loss_accuracy_report(history):
     plt.show()
 
 
-def show_confusion_matrix_report(model, val_data):
+def show_confusion_matrix_report(model, val_data, n_channels=1):
     """
     show_confusion_matrix_report function takes a confusion matrix as input
     and displays the confusion matrix.
@@ -265,6 +265,11 @@ def show_confusion_matrix_report(model, val_data):
     model: tf.keras.Model: Trained Keras model
     val_data: tf.data.Dataset: Validation data
     """
+
     y_pred = model.predict(val_data).argmax(axis=1)
-    print(confusion_matrix(val_data.labels, y_pred))
-    print(classification_report(val_data.labels, y_pred))
+    if n_channels == 1:
+        val_data = val_data.labels
+    else:
+        val_data = val_data.get_class_labels()
+    print(confusion_matrix(val_data, y_pred))
+    print(classification_report(val_data, y_pred))

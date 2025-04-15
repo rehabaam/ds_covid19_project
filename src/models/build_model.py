@@ -110,6 +110,9 @@ def train_advanced_supervised_model(
     num_classes,
     class_weight,
     n_channels=1,
+    filter_layers=[32, 64, 128, 256, 512],
+    conv2d_layers=4,
+    dense_layers=[256, 128, 64, 32],
     model_type="CNN",
     classification_type="binary",
 ):
@@ -153,15 +156,15 @@ def train_advanced_supervised_model(
                 return x
 
             # 🔹 Convolutional Block (4 layers + max pooling in the 4th layer)
-            filter_list = [32, 64, 128, 256, 512]
+            filter_list = filter_layers
             for filters in filter_list:
-                for _ in range(4):
+                for _ in range(conv2d_layers):
                     x = conv_block(x, filters)
                 x = MaxPooling2D(pool_size=(2, 2))(x)
 
             x = Flatten()(x)
             # 🔹 Fully Connected Block (4 layers)
-            dense_list = [256, 128, 64, 32]
+            dense_list = dense_layers
             for dense in dense_list:
                 x = Dense(dense, activation="relu")(x)
                 x = Dropout(0.2)(x)

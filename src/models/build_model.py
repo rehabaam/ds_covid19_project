@@ -20,6 +20,7 @@ from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.layers import (
     BatchNormalization,
+    Concatenate,
     Conv2D,
     Dense,
     Dropout,
@@ -27,8 +28,16 @@ from tensorflow.keras.layers import (
     GlobalAveragePooling2D,
     Input,
     MaxPooling2D,
+    RandomContrast,
+    RandomFlip,
+    RandomRotation,
+    RandomTranslation,
+    RandomZoom,
     Rescaling,
+    Reshape,
     Resizing,
+    UpSampling2D,
+    multiply,
 )
 from tensorflow.keras.optimizers import Adam
 
@@ -113,6 +122,9 @@ def train_advanced_supervised_model(
     filter_layers=[32, 64, 128, 256, 512],
     conv2d_layers=4,
     dense_layers=[256, 128, 64, 32],
+    augmentation=False,
+    attention=False,
+    aspp=False,
     model_type="CNN",
     classification_type="binary",
 ):
@@ -146,14 +158,16 @@ def train_advanced_supervised_model(
         case "CNN":
             # 🔹 Input layer Block
             inputs = Input(shape=(image_size, image_size, n_channels))
-            x = Resizing(256, 256)(inputs)
+            x = inputs
+            if augmentation:
+                # Apply augmentation
+                x = RandomTranslation(height_factor=0.2, width_factor=0.2)(x)
+                x = RandomZoom(height_factor=0.2, width_factor=0.2)(x)
+                x = RandomFlip("horizontal")(x)
+                x = RandomRotation(0.2)(x)
+                x = RandomContrast(0.2)(x)
             x = Rescaling(1.0 / 255)(x)
-
-            # Define a block: Conv -> BN -> ReLU
-            def conv_block(x, filters, kernel_size=3):
-                x = Conv2D(filters, kernel_size, activation="relu", padding="same")(x)
-                x = BatchNormalization()(x)
-                return x
+            x = Resizing(128, 128)(x)
 
             # 🔹 Convolutional Block (4 layers + max pooling in the 4th layer)
             filter_list = filter_layers
@@ -161,6 +175,13 @@ def train_advanced_supervised_model(
                 for _ in range(conv2d_layers):
                     x = conv_block(x, filters)
                 x = MaxPooling2D(pool_size=(2, 2))(x)
+                if attention:
+                    # Apply attention block
+                    x = se_block(x)
+
+            # 🔹 ASPP Block
+            if aspp:
+                x = aspp_block(x, filters=128)
 
             x = Flatten()(x)
             # 🔹 Fully Connected Block (4 layers)
@@ -269,18 +290,21 @@ def evaluate_model(
             y_pred = model.predict(X_test)
             y_pred = np.argmax(y_pred, axis=1)
 
+            X_data = np.concatenate([labels.numpy() for _, labels in X_test])
+            X_data = np.argmax(X_data, axis=1)
+
             f1 = (
-                f1_score(X_test.labels, y_pred, average="weighted")
+                f1_score(X_data, y_pred, average="weighted")
                 if n_channels == 1
                 else f1_score(X_test.get_class_labels(), y_pred, average="weighted")
             )
             precision = (
-                precision_score(X_test.labels, y_pred, average="weighted")
+                precision_score(X_data, y_pred, average="weighted")
                 if n_channels == 1
                 else precision_score(X_test.get_class_labels(), y_pred, average="weighted")
             )
             recall = (
-                recall_score(X_test.labels, y_pred, average="weighted")
+                recall_score(X_data, y_pred, average="weighted")
                 if n_channels == 1
                 else recall_score(X_test.get_class_labels(), y_pred, average="weighted")
             )
@@ -294,7 +318,7 @@ def evaluate_model(
             }
             # Fetting validation data
             if n_channels == 1:
-                images, _ = next(X_test)
+                images = np.concatenate([images.numpy() for images, _ in X_test])
             else:
                 for x, _ in X_test:
                     images = x
@@ -342,3 +366,38 @@ def evaluate_model(
     )
 
     return accuracy, classification_report(y_test, y_pred)
+
+
+# Define a block: Conv -> BN -> ReLU
+def conv_block(x, filters, kernel_size=3):
+    x = Conv2D(filters, kernel_size, activation="relu", padding="same")(x)
+    x = BatchNormalization()(x)
+    return x
+
+
+# Attention Block - Squeeze-and-Excitation Attention Block
+def se_block(input_tensor, reduction=16):
+    channels = input_tensor.shape[-1]
+    se = GlobalAveragePooling2D()(input_tensor)
+    se = Dense(channels // reduction, activation="relu")(se)
+    se = Dense(channels, activation="sigmoid")(se)
+    se = Reshape((1, 1, channels))(se)
+    x = multiply([input_tensor, se])
+    return x
+
+
+# ASPP Block
+def aspp_block(x, filters=256):
+    shape = x.shape
+    y1 = Conv2D(filters, (1, 1), padding="same", activation="relu")(x)
+    y2 = Conv2D(filters, (3, 3), dilation_rate=6, padding="same", activation="relu")(x)
+    y3 = Conv2D(filters, (3, 3), dilation_rate=12, padding="same", activation="relu")(x)
+    y4 = Conv2D(filters, (3, 3), dilation_rate=18, padding="same", activation="relu")(x)
+    y5 = GlobalAveragePooling2D()(x)
+    y5 = Reshape((1, 1, shape[-1]))(y5)
+    y5 = Conv2D(filters, (1, 1), padding="same", activation="relu")(y5)
+    y5 = UpSampling2D(size=(shape[1], shape[2]), interpolation="bilinear")(y5)
+
+    y = Concatenate()([y1, y2, y3, y4, y5])
+    y = Conv2D(filters, (1, 1), padding="same", activation="relu")(y)
+    return y

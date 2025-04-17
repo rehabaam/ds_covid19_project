@@ -268,7 +268,8 @@ def show_confusion_matrix_report(model, val_data, n_channels=1):
 
     y_pred = model.predict(val_data).argmax(axis=1)
     if n_channels == 1:
-        val_data = val_data.labels
+        val_data = np.concatenate([labels.numpy() for _, labels in val_data])
+        val_data = np.argmax(val_data, axis=1)
     else:
         val_data = val_data.get_class_labels()
     print(confusion_matrix(val_data, y_pred))

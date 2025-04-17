@@ -3,59 +3,57 @@ import os
 
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
-from tensorflow.keras.preprocessing.image import (
-    ImageDataGenerator,
+from tensorflow.keras.utils import (
+    Sequence,
+    image_dataset_from_directory,
     img_to_array,
     load_img,
+    to_categorical,
 )
-from tensorflow.keras.utils import Sequence, to_categorical
 
 
 def generate_augmented_images(path, image_size, batch_size) -> tuple:
     """
     generate_augmented_images_multiclass function generates
-    augmented images using ImageDataGenerator.
+    augmented images using image_dataset_from_directory.
 
     Input:
     path: str: Path to the images
     image_size: tuple: Size of the images
     batch_size: int: Number of augmented images to generate
     """
-    # Define an ImageDataGenerator for augmentation
-    datagen = ImageDataGenerator(
-        dtype="uint8",  # Data type
-        validation_split=0.2,
-    )
-
-    train_generator = datagen.flow_from_directory(
+    # Define an image_dataset_from_directory for augmentation
+    train_generator = image_dataset_from_directory(
         path,
-        target_size=image_size,
+        image_size=image_size,
         batch_size=batch_size,
-        class_mode="categorical",
+        label_mode="categorical",
         color_mode="grayscale",
         subset="training",
+        validation_split=0.2,
         seed=42,
         shuffle=True,
     )
 
-    val_generator = datagen.flow_from_directory(
+    val_generator = image_dataset_from_directory(
         path,
-        target_size=image_size,
+        image_size=image_size,
         batch_size=batch_size,
-        class_mode="categorical",
+        label_mode="categorical",
         color_mode="grayscale",
         subset="validation",
+        validation_split=0.2,
         seed=42,
         shuffle=True,
     )
 
-    class_labels = train_generator.classes
+    class_labels = train_generator.class_names
     class_weights = compute_class_weight(
         "balanced", classes=np.unique(class_labels), y=class_labels
     )
     class_weight_dict = dict(enumerate(class_weights))
 
-    print(f"Computed Class Weights:{class_weight_dict} labels: {train_generator.class_indices}")
+    print(f"Computed Class Weights:{class_weight_dict} labels: {train_generator.class_names}")
 
     return train_generator, val_generator, class_weight_dict
 

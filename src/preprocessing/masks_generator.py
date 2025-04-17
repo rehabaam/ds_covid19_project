@@ -24,11 +24,10 @@ def predict_and_save(image_path, output_path, model, target_size, apply_mask=Fal
     img_array = np.expand_dims(img_array, axis=0)  # (1, h, w, 1)
     prediction = model.predict(img_array)
     mask = (prediction[0, :, :, 0] > 0.5).astype(np.uint8) * 255  # Convert to 0-255
+    mask = mask = (mask > 127).astype(np.uint8)
 
     if apply_mask:
-        # Load original image
-        image = 255 - np.asarray(img).copy()  # Invert image for mask application
-        mask = cv2.subtract(mask, image)
+        mask = np.asarray(img).copy() * mask
 
     # Save mask as PNG
     cv2.imwrite(output_path, mask)

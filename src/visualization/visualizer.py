@@ -6,7 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    classification_report,
+    confusion_matrix,
+)
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.models import Model
 
@@ -265,12 +269,14 @@ def show_confusion_matrix_report(model, val_data, n_channels=1):
     model: tf.keras.Model: Trained Keras model
     val_data: tf.data.Dataset: Validation data
     """
-
+    class_names = val_data.class_names
     y_pred = model.predict(val_data).argmax(axis=1)
     if n_channels == 1:
         val_data = np.concatenate([labels.numpy() for _, labels in val_data])
         val_data = np.argmax(val_data, axis=1)
     else:
         val_data = val_data.get_class_labels()
-    print(confusion_matrix(val_data, y_pred))
-    print(classification_report(val_data, y_pred))
+    cm = confusion_matrix(val_data, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
+    disp.plot()
+    print(classification_report(val_data, y_pred, target_names=class_names))

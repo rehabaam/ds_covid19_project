@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
+import random
+import shutil
 
 import numpy as np
 from sklearn.utils.class_weight import compute_class_weight
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import (
     Sequence,
     image_dataset_from_directory,
@@ -12,39 +15,138 @@ from tensorflow.keras.utils import (
 )
 
 
-def generate_augmented_images(path, image_size, batch_size) -> tuple:
+def create_training_validation_datasers(input_dir, output_dir, split_ratio=0.2):
     """
-    generate_augmented_images_multiclass function generates
-    augmented images using image_dataset_from_directory.
+    create_training_validation_datasers function splits the dataset into training and validation sets.
+
+    Input:
+    input_dir: str: Path to the input images
+    output_dir: str: Path to save the augmented images
+    split_ratio: float: Ratio of validation data to total data
+
+    Output:
+    None
+    """
+    class_names = [d for d in os.listdir(input_dir) if os.path.isdir(os.path.join(input_dir, d))]
+
+    for class_name in class_names:
+        class_dir = os.path.join(input_dir, class_name)
+        images = [f for f in os.listdir(class_dir) if not f.startswith(".")]
+
+        # Shuffle the images
+        if len(images) == 0:
+            print(f"No images found in {class_dir}. Skipping this class.")
+            continue
+        if len(images) < 2:
+            print(f"Not enough images to split in {class_dir}. Skipping this class.")
+            continue
+
+        random.shuffle(images)
+
+        split_index = int(len(images) * (1 - split_ratio))
+        train_images = images[:split_index]
+        val_images = images[split_index:]
+
+        # Create output folders
+        train_class_dir = os.path.join(output_dir, "train", class_name)
+        val_class_dir = os.path.join(output_dir, "val", class_name)
+        os.makedirs(train_class_dir, exist_ok=True)
+        os.makedirs(val_class_dir, exist_ok=True)
+
+        # Copy files
+        for img in train_images:
+            shutil.copy(os.path.join(class_dir, img), os.path.join(train_class_dir, img))
+        for img in val_images:
+            shutil.copy(os.path.join(class_dir, img), os.path.join(val_class_dir, img))
+
+    print("Dataset split completed!")
+
+
+def generate_augmented_images(input_folder, output_folder, class_name, n_images, total_images):
+    """
+    generate_augmented_images function generates augmented images using ImageDataGenerator.
+
+    Input:
+    input_folder: str: Path to the input images
+    output_folder: str: Path to save the augmented images
+    class_name: str: Name of the class for which to generate augmented images
+    n_images: int: Number of augmented images to generate
+    total_images: int: Total number of images in the input folder
+    """
+    # Paths
+    input_folder = os.path.join(input_folder, class_name)
+    output_folder = os.path.join(output_folder, class_name)
+    os.makedirs(output_folder, exist_ok=True)
+
+    # Calculate the number of images to generate by iteration
+    n_augment_images = np.ceil(total_images / n_images).astype(int)
+    if n_augment_images == 0:
+        print(f"Not enough images to generate {n_images} augmented images.")
+        return
+    else:
+        print(f"Generating {n_augment_images} augmented images per original image.")
+
+    # Create the ImageDataGenerator with augmentation options
+    datagen = ImageDataGenerator(
+        rotation_range=10,  # rotate images randomly up to 10 degrees
+        horizontal_flip=True,  # flip horizontally
+    )
+
+    # Loop through each image in the input folder
+    for img_name in os.listdir(input_folder):
+        if img_name.lower().endswith(("png", "jpg", "jpeg")):
+            img_path = os.path.join(input_folder, img_name)
+
+            # Load image
+            img = load_img(img_path)
+            x = img_to_array(img)
+            x = x.reshape((1,) + x.shape)
+
+            # Generate and save 5 augmented images per original image
+            i = 0
+            for _ in datagen.flow(
+                x, batch_size=1, save_to_dir=output_folder, save_prefix="aug", save_format="png"
+            ):
+                i += 1
+                if i >= n_augment_images:
+                    break
+
+
+def load_dataset_images(path, image_size, batch_size, color_mode="grayscale") -> tuple:
+    """
+    load_dataset_images function loads images from a directory
+    using image_dataset_from_directory.
 
     Input:
     path: str: Path to the images
     image_size: tuple: Size of the images
     batch_size: int: Number of augmented images to generate
+    color_mode: str: Color mode of the images (grayscale or rgb)
+
+    Output:
+    train_generator: tf.data.Dataset: Training data generator
+    val_generator: tf.data.Dataset: Validation data generator
+    class_weight_dict: dict: Class weights for the training data
     """
     # Define an image_dataset_from_directory for augmentation
     train_generator = image_dataset_from_directory(
-        path,
+        os.path.join(path, "train"),
         image_size=image_size,
         batch_size=batch_size,
         label_mode="categorical",
-        color_mode="grayscale",
-        subset="training",
-        validation_split=0.2,
-        seed=42,
+        color_mode=color_mode,
+        seed=1234,
         shuffle=True,
     )
 
     val_generator = image_dataset_from_directory(
-        path,
+        os.path.join(path, "val"),
         image_size=image_size,
         batch_size=batch_size,
         label_mode="categorical",
-        color_mode="grayscale",
-        subset="validation",
-        validation_split=0.2,
-        seed=42,
-        shuffle=True,
+        color_mode=color_mode,
+        seed=1234,
+        shuffle=False,
     )
 
     class_labels = train_generator.class_names

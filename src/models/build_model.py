@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import tensorflow as tf
 from catboost import CatBoostClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -16,7 +17,7 @@ from sklearn.metrics import (
 from sklearn.svm import SVC
 from sklearn.utils.class_weight import compute_class_weight
 from tensorflow.keras import Model
-from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.applications import DenseNet121
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.layers import (
     BatchNormalization,
@@ -24,7 +25,6 @@ from tensorflow.keras.layers import (
     Conv2D,
     Dense,
     Dropout,
-    Flatten,
     GlobalAveragePooling2D,
     Input,
     MaxPooling2D,
@@ -39,6 +39,7 @@ from tensorflow.keras.layers import (
     UpSampling2D,
     multiply,
 )
+from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.optimizers import Adam
 
 from src.common.mlflow_manager import log_model
@@ -138,8 +139,15 @@ def train_advanced_supervised_model(
     epochs: int: Number of epochs to train
     num_classes: int: Number of classes
     class_weight: dict: Class weights for the model
+    n_channels: int: Number of channels in the image
+    filter_layers: list: List of filters for the convolutional layers
+    conv2d_layers: int: Number of convolutional layers
+    dense_layers: list: List of filters for the dense layers
+    augmentation: bool: Whether to apply augmentation
+    attention: bool: Whether to apply attention
+    aspp: bool: Whether to apply ASPP
     model_type: str: Type of model to train
-    classification_type: str: Type of the classification
+    classification_type: str: Type of the classification [binary or categorical]
 
     Output:
     model: model: Trained model
@@ -152,7 +160,8 @@ def train_advanced_supervised_model(
         loss = "binary_crossentropy"
     else:
         activation = "softmax"
-        loss = "categorical_crossentropy"
+        loss = focal_loss()
+        # loss = "categorical_crossentropy"
 
     match model_type:
         case "CNN":
@@ -175,15 +184,17 @@ def train_advanced_supervised_model(
                 for _ in range(conv2d_layers):
                     x = conv_block(x, filters)
                 x = MaxPooling2D(pool_size=(2, 2))(x)
-                if attention:
-                    # Apply attention block
-                    x = se_block(x)
+                x = Dropout(0.2)(x)
 
             # 🔹 ASPP Block
             if aspp:
                 x = aspp_block(x, filters=128)
 
-            x = Flatten()(x)
+            # 🔹 Attention Block
+            if attention:
+                x = se_block(x)
+
+            x = GlobalAveragePooling2D()(x)
             # 🔹 Fully Connected Block (4 layers)
             dense_list = dense_layers
             for dense in dense_list:
@@ -203,7 +214,7 @@ def train_advanced_supervised_model(
             # Model Summary
             model.summary()
         case "Transfer Learning":
-            base_model = EfficientNetB0(
+            base_model = DenseNet121(
                 weights="imagenet",
                 include_top=False,
                 input_shape=(image_size, image_size, 3),
@@ -214,8 +225,6 @@ def train_advanced_supervised_model(
             # Extract deep features
             x = base_model.output
             x = GlobalAveragePooling2D()(x)
-            x = Dense(128, activation="relu")(x)
-            x = Dropout(0.3)(x)
 
             output = Dense(num_classes, activation=activation)(x)  # Binary classification
 
@@ -235,14 +244,16 @@ def train_advanced_supervised_model(
             raise ValueError("Invalid model type")
 
     reduce_lr = ReduceLROnPlateau(
-        monitor="val_loss", factor=0.2, patience=5, min_lr=1e-5, verbose=1
+        monitor="val_loss", factor=0.5, patience=5, min_lr=1e-9, verbose=1
     )
-    early_stop = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True, verbose=1)
+    early_stop = EarlyStopping(
+        monitor="val_loss", patience=20, restore_best_weights=True, verbose=1
+    )
     return model, model.fit(
         X_train,
         validation_data=y_train,
         epochs=epochs,
-        batch_size=32,
+        batch_size=16,
         class_weight=class_weight,
         callbacks=[reduce_lr, early_stop],
     )
@@ -256,6 +267,8 @@ def evaluate_model(
     n_channels=1,
     model_type="Logistic Regression",
     classification_type="binary",
+    parameters=None,
+    balanced=False,
     history=None,
 ):
     """
@@ -266,13 +279,20 @@ def evaluate_model(
     model: model: Trained model
     X_test: np.array: Features
     y_test: np.array: Labels
+    n_channels: int: Number of channels in the image
     model_type: str: Type of model to train
     classification_type: str: Type of the classification
+    history: history: Training history
 
     Output:
     accuracy: float: Accuracy of the model
     classification_report: str: Classification report
     """
+    if balanced:
+        average = "macro"
+    else:
+        average = "weighted"
+
     match model_type:
         case "Logistic Regression":
             y_pred = model.predict(X_test)
@@ -288,25 +308,25 @@ def evaluate_model(
         case "CNN" | "Transfer Learning":
             loss, accuracy = model.evaluate(X_test)
             y_pred = model.predict(X_test)
-            y_pred = np.argmax(y_pred, axis=1)
+            y_pred = np.argmax(y_pred, axis=-1)
 
-            X_data = np.concatenate([labels.numpy() for _, labels in X_test])
-            X_data = np.argmax(X_data, axis=1)
+            y_true = np.concatenate([labels.numpy() for _, labels in X_test])
+            y_true = np.argmax(y_true, axis=-1)
 
             f1 = (
-                f1_score(X_data, y_pred, average="weighted")
+                f1_score(y_true, y_pred, average=average)
                 if n_channels == 1
-                else f1_score(X_test.get_class_labels(), y_pred, average="weighted")
+                else f1_score(X_test.get_class_labels(), y_pred, average=average)
             )
             precision = (
-                precision_score(X_data, y_pred, average="weighted")
+                precision_score(y_true, y_pred, average=average)
                 if n_channels == 1
-                else precision_score(X_test.get_class_labels(), y_pred, average="weighted")
+                else precision_score(X_test.get_class_labels(), y_pred, average=average)
             )
             recall = (
-                recall_score(X_data, y_pred, average="weighted")
+                recall_score(y_true, y_pred, average=average)
                 if n_channels == 1
-                else recall_score(X_test.get_class_labels(), y_pred, average="weighted")
+                else recall_score(X_test.get_class_labels(), y_pred, average=average)
             )
 
             metrics = {
@@ -333,6 +353,7 @@ def evaluate_model(
                 images,
                 metrics,
                 classification_type,
+                parameters,
                 history,
             )
             return loss, accuracy
@@ -348,9 +369,9 @@ def evaluate_model(
         "rmse": np.sqrt(mse),
         "r2": r2_score(y_test, y_pred),
         "accuracy": accuracy,
-        "f1_score": f1_score(y_test, y_pred, average="weighted"),
-        "precision": precision_score(y_test, y_pred, average="weighted"),
-        "recall": recall_score(y_test, y_pred, average="weighted"),
+        "f1_score": f1_score(y_test, y_pred, average=average),
+        "precision": precision_score(y_test, y_pred, average=average),
+        "recall": recall_score(y_test, y_pred, average=average),
     }
 
     log_model(
@@ -362,6 +383,7 @@ def evaluate_model(
         X_test,
         metrics,
         classification_type,
+        parameters,
         history=None,
     )
 
@@ -377,11 +399,16 @@ def conv_block(x, filters, kernel_size=3):
 
 # Attention Block - Squeeze-and-Excitation Attention Block
 def se_block(input_tensor, reduction=16):
+    """Squeeze-and-Excitation (SE) Attention Block."""
     channels = input_tensor.shape[-1]
+
+    # Squeeze
     se = GlobalAveragePooling2D()(input_tensor)
     se = Dense(channels // reduction, activation="relu")(se)
     se = Dense(channels, activation="sigmoid")(se)
     se = Reshape((1, 1, channels))(se)
+
+    # Scale
     x = multiply([input_tensor, se])
     return x
 
@@ -390,9 +417,9 @@ def se_block(input_tensor, reduction=16):
 def aspp_block(x, filters=256):
     shape = x.shape
     y1 = Conv2D(filters, (1, 1), padding="same", activation="relu")(x)
-    y2 = Conv2D(filters, (3, 3), dilation_rate=6, padding="same", activation="relu")(x)
-    y3 = Conv2D(filters, (3, 3), dilation_rate=12, padding="same", activation="relu")(x)
-    y4 = Conv2D(filters, (3, 3), dilation_rate=18, padding="same", activation="relu")(x)
+    y2 = Conv2D(filters, (3, 3), dilation_rate=2, padding="same", activation="relu")(x)
+    y3 = Conv2D(filters, (3, 3), dilation_rate=4, padding="same", activation="relu")(x)
+    y4 = Conv2D(filters, (3, 3), dilation_rate=6, padding="same", activation="relu")(x)
     y5 = GlobalAveragePooling2D()(x)
     y5 = Reshape((1, 1, shape[-1]))(y5)
     y5 = Conv2D(filters, (1, 1), padding="same", activation="relu")(y5)
@@ -401,3 +428,15 @@ def aspp_block(x, filters=256):
     y = Concatenate()([y1, y2, y3, y4, y5])
     y = Conv2D(filters, (1, 1), padding="same", activation="relu")(y)
     return y
+
+
+def focal_loss(gamma=2.0, alpha=0.25):
+    def loss_fn(y_true, y_pred):
+        y_true = tf.cast(y_true, tf.float32)
+        cce = CategoricalCrossentropy()
+        bce = cce(y_true, y_pred)
+        bce_exp = tf.exp(-bce)
+        focal_loss = alpha * (1 - bce_exp) ** gamma * bce
+        return focal_loss
+
+    return loss_fn

@@ -17,6 +17,7 @@ def log_model(
     test_data,
     metrics,
     classification_type,
+    parameters=None,
     history=None,
 ):
     """
@@ -30,7 +31,9 @@ def log_model(
     model_name: The name of the model
     test_data: The test data to infer the signature
     metrics: The metrics to log
+    parameters: The parameters to log
     classification_type: The type of classification
+    history: The training history of the model (optional)
 
     output:
     model_info: The model info
@@ -68,6 +71,9 @@ def log_model(
 
         # Log the loss metric
         mlflow.log_metrics(metrics)
+
+        # Log the parameters
+        # mlflow.log_params(parameters)
 
         signature = infer_signature(test_data, model.predict(test_data))
 

@@ -119,7 +119,7 @@ mlflow-skinny==2.21.3
 monai==1.4.0
 mpmath==1.3.0
 mypy-extensions==1.0.0
-namex==0.0.8
+namex==0.0.9
 narwhals==1.37.1
 nbclient==0.10.2
 nbconvert==7.16.4
